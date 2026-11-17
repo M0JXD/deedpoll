@@ -26,14 +26,11 @@
 -- THE SOFTWARE.
 
 -- support detection
-local function isWindows()
-    return type(package) == 'table' and type(package.config) == 'string' and
-        package.config:sub(1, 1) == '\\'
-end
-
-local supported = not isWindows()
-if isWindows() then
-    supported = os.getenv("ANSICON") or os.getenv('WT_SESSION')
+local function colorSupport()
+    local isWindows = type(package) == 'table' and type(package.config) ==
+        'string' and package.config:sub(1, 1) == '\\'
+    return isWindows and (os.getenv("ANSICON") or os.getenv('WT_SESSION')) or
+        true
 end
 
 local keys = {
@@ -74,10 +71,9 @@ local function escapeNumber(number)
     return escapeString:format(number)
 end
 
+local colorsSupported = colorSupport()
 local function escapeKeys(str)
-
-    if not supported then return "" end
-
+    if not colorsSupported then return "" end
     local buffer = {}
     local number
     for word in str:gmatch("%w+") do
@@ -97,7 +93,6 @@ end
 
 local function colors(str)
     str = tostring(str or '')
-
     return replaceCodes('%{reset}' .. str .. '%{reset}')
 end
 
@@ -170,7 +165,7 @@ local function pr_version()
 end
 
 local function pr_options(mode, params, opt)
-    local str_dict = {
+    local dict = {
         c = 'CASE',
         d = 'DELETE',
         s = 'SEARCH',
@@ -181,39 +176,54 @@ local function pr_options(mode, params, opt)
         u = 'Changing names to uppercase.',
         a = 'Removing accents from names.',
         f = 'Changing names to first character uppercase.',
+        b = 'basenames.',
+        e = 'file name extensions.',
         action = colors '%{yellow}ACTION:',
         find = colors '%{yellow}FIND:',
         replace = colors '%{yellow}REPLACE:',
         insert = colors '%{yellow}INSERT:',
+        insert_pos = colors '%{magenta}AT:',
         increment = colors '%{magenta}INCREMENT:',
         start = colors '%{magenta}START NUMBER:',
         sensitivity = colors '%{magenta}CASE SENSITIVITY:',
-        regex = colors '%{magenta}REGEX:'
+        regex = colors '%{magenta}REGEX:',
+        from = colors '%{magenta}DELETE FROM:',
+        to = colors '%{magenta}DELETE TO:',
+        overwrite = colors '%{magenta}OVERWRITE:'
+
     }
 
-    print(colors('%{bright green}===== ' .. str_dict[mode] .. ' MODE ====='))
+    print(colors('%{bright green}===== ' .. dict[mode] .. ' MODE ====='))
+
+    -- Mode details
+    -- LuaFormatter off
     if mode == 'c' then
-        print(str_dict.action .. ' ' .. str_dict[params.case])
+        print(dict.action .. ' ' .. dict[params.case])
     elseif mode == 'd' then
-        print(string.format('Deleting from postion %d %s to postion %s %d.',
-                            opt.pos, opt.pos_end and 'from the end' or '\b',
-                            opt.to_end and 'from the end' or '\b', opt.to))
+		print(string.format('%s %d %s', dict.from, opt.pos, opt.pos_end and 'from the end.' or '\b'))
+		print(string.format('%s %d %s', dict.to, opt.to, opt.to_end and 'from the end.' or '\b'))
     elseif mode == 's' or mode == 'r' then
-        print(string.format(str_dict.find .. ' %s', params.find))
-        print(string.format(str_dict.replace .. ' %s', params.text))
-        print(string.format(
-                  str_dict.regex .. ' %s, ' .. str_dict.sensitivity .. ' %s, ' ..
-                str_dict.increment .. ' %d, ' .. str_dict.start .. ' %d',
-                  opt.regex and 'ON' or 'OFF', opt.sensitive and 'ON' or 'OFF',
-                  opt.increment, opt.start))
+        print(string.format('%s %s', dict.find, params.find))
+        print(string.format('%s %s', dict.replace, params.text))
+        print(string.format('%s %s, %s %s, %s %d, %s %d',
+			dict.regex, opt.regex and 'ON' or 'OFF',
+			dict.sensitivity, opt.sensitive and 'ON' or 'OFF',
+			dict.increment, opt.increment,
+			dict.start, opt.start
+		))
     elseif mode == 'i' then
-        print(string.format('Inserting at postion %d %s %s overwrite.', opt.pos,
-                            opt.pos_end and 'from the end' or '\b',
-                            opt.overwrite and 'with' or 'without'))
-        print(string.format(str_dict.insert .. ' %s', params.find))
-        print(string.format(str_dict.increment .. ' %d, ' .. str_dict.start ..
-            ' %d', opt.increment, opt.start))
+        print(string.format('%s %s', dict.insert, params.find))
+		print(string.format('%s %d %s',
+			dict.insert_pos, opt.pos, opt.pos_end and 'from the end.' or '\b'))
+		print(string.format('%s %s, %s %d, %s %d',
+			dict.overwrite, opt.overwrite and 'ON' or 'OFF',
+			dict.increment, opt.increment,
+			dict.start, opt.start
+		))
     end
+	-- LuaFormatter on
+
+    -- Info warnings
     if opt.mock then
         pr_info('Running in mock mode. No changes will be made.')
     end
@@ -225,7 +235,8 @@ local function pr_options(mode, params, opt)
         pr_info(
             'Running with recurse mode. Files in subdirectories will be processed.')
     end
-    pr_info('Operating on ' .. opt.name .. ' names.')
+    pr_info('Operating on ' ..
+        (opt.name == 'f' and 'full file names.' or dict[opt.name]))
     if opt.yes then pr_info('Skipping confirmation!') end
     print()
 end
@@ -253,7 +264,7 @@ local renamers = {
     a = function(name, params, opt) return name end,
     -- First Character Uppercase Renamer
     f = function(name, params, opt)
-		name = name:sub(1, 1):upper() .. name:sub(2)
+        name = name:sub(1, 1):upper() .. name:sub(2)
         return name
     end,
     -- Delete Renamer
@@ -266,39 +277,40 @@ local renamers = {
     s = function(name, params, opt) return name end
 }
 
-
 -- Wraps actions to handle base/ext/full renaming
 local function rename_action(name, action, params, opt)
-	if opt.name == 'base' and name:match('%..*') then
-		name = action(name:match('[^%.]*'), params, opt) .. name:match('%..*')
-	elseif opt.name == 'ext' then
-		name = name:match('[^%.]*') .. action(name:match('%..*'), params, opt)
-	elseif opt.name == 'full' or opt.name == 'base' then
-		name = action(name, params, opt)
-	end
-	return name
+    if opt.name == 'b' and name:match('%..*') then
+        name = action(name:match('[^%.]*'), params, opt) .. name:match('%..*')
+    elseif opt.name == 'e' then
+        name = name:match('[^%.]*') .. action(name:match('%..*'), params, opt)
+    elseif opt.name == 'f' or opt.name == 'b' then
+        name = action(name, params, opt)
+    end
+    return name
 end
 
 local function rename(files, action, params, opt)
-	for _, file in ipairs(files) do
-		local color = lfs.attributes(file).mode == 'directory' and '%{bright blue}' or ''
-		print(colors(color .. file .. '%{reset cyan} -> %{reset}' .. color .. rename_action(file, action, params, opt)))
-	end
+    for _, file in ipairs(files) do
+        local color = lfs.attributes(file).mode == 'directory' and
+            '%{bright blue}' or ''
+        print(colors(color .. file .. '%{reset cyan} -> %{reset}' .. color ..
+            rename_action(file, action, params, opt)))
+    end
 
-	local confirm = 'n'
-	if not (opt.mock or opt.yes) then
-		io.write(colors'\nContinue with operation? %{magenta}(Y/n)%{reset}: ')
-		confirm = io.read(1)
-	end
+    local confirm = 'n'
+    if not (opt.mock or opt.yes) then
+        io.write(colors '\nContinue with operation? %{magenta}(Y/n)%{reset}: ')
+        confirm = io.read(1)
+    end
 
-	if not opt.mock and (opt.yes or confirm:find('[Yy]')) then
-		for _, file in ipairs(files) do
-			os.rename(file, rename_action(file, action, params, opt))
-			print(colors('\n%{cyan}Files renamed!'))
-		end
-	else
-		print(colors('\n%{red}Files not renamed.'))
-	end
+    if not opt.mock and (opt.yes or confirm:find('[Yy]')) then
+        for _, file in ipairs(files) do
+            os.rename(file, rename_action(file, action, params, opt))
+            print(colors('\n%{cyan}Files renamed!'))
+        end
+    else
+        print(colors('\n%{red}Files not renamed.'))
+    end
 end
 
 -- File System
@@ -307,15 +319,15 @@ local lfs = require('lfs')
 function recurse_dir(path)
     for file in lfs.dir(path) do
         if file ~= "." and file ~= ".." then
-            local f = path..'/'..file
-            print ("\t "..f)
-            local attr = lfs.attributes (f)
-            assert (type(attr) == "table")
+            local f = path .. '/' .. file
+            print("\t " .. f)
+            local attr = lfs.attributes(f)
+            assert(type(attr) == "table")
             if attr.mode == "directory" then
-                recurse_dir (f)
+                recurse_dir(f)
             else
                 for name, value in pairs(attr) do
-                    print (name, value)
+                    print(name, value)
                 end
             end
         end
@@ -327,9 +339,11 @@ local function get_files(index, opt)
     if not index then
         -- Presume current directory
         pr_info('No files/paths specified, using current directory.')
-		for file in lfs.dir(lfs.currentdir()) do
-			if file:sub(1,1) ~= '.' then table.insert(file_list, file) end
-		end
+        for file in lfs.dir(lfs.currentdir()) do
+            if file:sub(1, 1) ~= '.' then
+                table.insert(file_list, file)
+            end
+        end
     else
         for i = index, #arg do
             if not arg[i] then
@@ -341,39 +355,26 @@ local function get_files(index, opt)
                 end
                 -- Check the file actually exists
 
-
                 -- Add it to the table
             end
         end
     end
-	return file_list
+    return file_list
 end
 
 -- CLI Parsers
 
 -- Parsesoptions and filenames after mode parameters are parsed
 local function parse_opts_files(index)
-    -- Boolean options opt lookup table
-    local opt_val = {
-        ['-c'] = 'sensitive',
-        ['-d'] = 'disallow',
-		['-f'] = 'full',
-        ['-e'] = 'regex',
-        ['-m'] = 'mock',
-        ['-o'] = 'overwrite',
-        ['-r'] = 'recurse',
-        ['-y'] = 'yes'
-    }
-
     --- Options table
     local opt = {
         sensitive = false,
         disallow = false,
-		full = false,
+        full = false,
         regex = false,
         increment = 1,
         mock = false,
-        name = 'base',
+        name = 'b',
         overwrite = false,
         pos = 1,
         pos_end = false,
@@ -381,7 +382,22 @@ local function parse_opts_files(index)
         start = 1,
         to = 1,
         to_end = false,
-        yes = false
+        yes = false,
+
+        -- Lookup values
+        ['-c'] = 'sensitive',
+        ['-d'] = 'disallow',
+        ['-f'] = 'full',
+        ['-e'] = 'regex',
+        ['-m'] = 'mock',
+        ['-o'] = 'overwrite',
+        ['-r'] = 'recurse',
+        ['-y'] = 'yes',
+        ['-i'] = 'increment',
+        ['-n'] = 'name',
+        ['-p'] = 'pos',
+        ['-s'] = 'start',
+        ['-t'] = 'to'
     }
 
     local first_file
@@ -390,14 +406,47 @@ local function parse_opts_files(index)
         if arg[i]:sub(1, 1) == '-' then
             -- Set boolean options
             if arg[i]:find('%-[cdefmory]') then
-                opt[opt_val[arg[i]:match('%-[cdefmory]')]] = true
+                opt[opt[arg[i]:match('%-[cdefmory]')]] = true
             end
-            -- Handle 'e' behaviour in pos/to
+            -- Handle "=" options
+            if arg[i]:find('%-[inpst]') then
+                if not arg[i]:find('=') then
+                    pr_err(
+                        "Value options must be of the form -o=value or --opt=value!")
+                end
+                opt[opt[arg[i]:match('%-[inpst]')]] = arg[i]:match('=.*'):sub(2)
+                -- Name
+                opt.name = opt.name:match('[bef]')
+                if not opt.name then opt.name = 'b' end
+                -- Handle 'e' behaviour in pos/to
+                if type(opt.pos) == 'string' then
+                    if opt.pos:find('e') then
+                        opt.pos_end = true
+                    end
+                    opt.pos = tonumber(opt.pos:match('%d'))
+                end
 
-            -- Handle start/increment
+                if type(opt.to) == 'string' then
+                    if opt.to:find('e') then
+                        opt.to_end = true
+                    end
+                    opt.to = tonumber(opt.to:match('%d'))
+                end
+                -- Convert number arguments
+                if type(opt.increment) == 'string' then
+                    opt.increment = tonumber(opt.increment)
+                end
 
-			-- Handle name type
-
+                if type(opt.start) == 'string' then
+                    opt.start = tonumber(opt.start)
+                end
+                -- Check for errors
+                if not opt.name then opt.name = 'b' end
+                if not opt.pos then opt.pos = 1 end
+                if not opt.to then opt.to = 1 end
+                if not opt.increment then opt.increment = 1 end
+                if not opt.start then opt.start = 1 end
+            end
         else
             -- Must be start of file list
             first_file = i
