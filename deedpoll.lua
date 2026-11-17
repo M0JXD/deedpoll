@@ -1,0 +1,465 @@
+-- Copyright 2026 Jamie Drinkell
+
+-- COLORS
+-- ansicolors.lua v1.0.3 (2026-08)
+
+-- Copyright (c) 2009 Rob Hoelz <rob@hoelzro.net>
+-- Copyright (c) 2011 Enrique García Cota <enrique.garcia.cota@gmail.com>
+-- Copyright (c) 2026 Jamie Drinkell <jamiedrinkell@gmail.com>
+--
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
+--
+-- The above copyright notice and this permission notice shall be included in
+-- all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+-- THE SOFTWARE.
+
+-- support detection
+local function isWindows()
+    return type(package) == 'table' and type(package.config) == 'string' and
+        package.config:sub(1, 1) == '\\'
+end
+
+local supported = not isWindows()
+if isWindows() then
+    supported = os.getenv("ANSICON") or os.getenv('WT_SESSION')
+end
+
+local keys = {
+    -- reset
+    reset = 0,
+
+    -- misc
+    bright = 1,
+    dim = 2,
+    underline = 4,
+    blink = 5,
+    reverse = 7,
+    hidden = 8,
+
+    -- foreground colors
+    black = 30,
+    red = 31,
+    green = 32,
+    yellow = 33,
+    blue = 34,
+    magenta = 35,
+    cyan = 36,
+    white = 37,
+
+    -- background colors
+    blackbg = 40,
+    redbg = 41,
+    greenbg = 42,
+    yellowbg = 43,
+    bluebg = 44,
+    magentabg = 45,
+    cyanbg = 46,
+    whitebg = 47
+}
+
+local escapeString = string.char(27) .. '[%dm'
+local function escapeNumber(number)
+    return escapeString:format(number)
+end
+
+local function escapeKeys(str)
+
+    if not supported then return "" end
+
+    local buffer = {}
+    local number
+    for word in str:gmatch("%w+") do
+        number = keys[word]
+        assert(number, "Unknown key: " .. word)
+        table.insert(buffer, escapeNumber(number))
+    end
+
+    return table.concat(buffer)
+end
+
+local function replaceCodes(str)
+    str = string.gsub(str, "(%%{(.-)})",
+                      function(_, str) return escapeKeys(str) end)
+    return str
+end
+
+local function colors(str)
+    str = tostring(str or '')
+
+    return replaceCodes('%{reset}' .. str .. '%{reset}')
+end
+
+-- DEEDPOLL
+
+-- PRINT UTILS
+
+local function pr_err(str)
+    print(colors '%{red}ERROR:%{reset} ' .. str)
+    os.exit()
+end
+
+local function pr_info(str)
+    print(colors '%{blue}INFO:%{reset} ' .. str)
+end
+
+local function pr_help()
+    -- LuaFormatter off
+    local mode = colors('%{green}[MODE]')
+    local parameters = colors('%{yellow}[PARAMETERS]')
+    local options = colors('%{magenta}[OPTIONS]')
+    local files = colors('%{blue}[FILES]')
+    local usage = string.format(
+		colors('%{bright}Usage:%{reset}') .. ' deedpoll %s %s %s %s', mode, parameters, options, files)
+    print(usage)
+    print('Default behaviour is to operate on the basename. All option values default to 1.\n')
+    print(mode)
+    print(colors '  %{cyan}case    (c)%{reset}  Changes character cases.')
+    print(colors '  %{cyan}delete  (d)%{reset}  Delete characters from a position to another.')
+    print(colors '  %{cyan}search  (s)%{reset}  Search and replace within file contents.')
+    print(colors '  %{cyan}insert  (i)%{reset}  Insert text.')
+    print(colors '  %{cyan}replace (r)%{reset}  Replace text.\n')
+    print(parameters)
+    print(colors '  %{bright}ACTION%{reset}  Case change to apply in case mode.')
+    print(colors '    %{cyan}title   (t)%{reset}  Changes names to title case.')
+    print(colors '    %{cyan}lower   (l)%{reset}  Changes names to lower case.')
+    print(colors '    %{cyan}upper   (u)%{reset}  Changes names to upper case')
+    print(colors '    %{cyan}accents (a)%{reset}  Removes accents in the file name.')
+    print(colors '    %{cyan}first   (f)%{reset}  Makes first character uppercase.')
+    print(colors '  %{bright}FIND%{reset}  Text to find in search/replace mode. Wildcards ? and * are supported.')
+    print(colors '  %{bright}TEXT%{reset}  Text for search/insert/replace mode. Use %n, %0n, %00n etc. to enumerate.\n')
+    print(options)
+    print(colors '  %{cyan}-c/--case%{reset}         Enable case sensitivity in replace mode.')
+    print(colors '  %{cyan}-d/--disallow%{reset}     Treat passed filenames as ones to disallow from current directory.')
+    print(colors '  %{cyan}-e/--exp%{reset}          Enable regular expressions in replace mode find strings.')
+	print(colors '  %{cyan}-f/--full%{reset}         Use full file listing including hidden dotfiles.')
+    print(colors '  %{cyan}-h/--help%{reset}         Show help text.')
+    print(colors '  %{cyan}-i=/--increment=%{reset}  Value to increment by for %n patterns in insert/replace mode.')
+    print(colors '  %{cyan}-m/--mock%{reset}         Do a mock run without changing files or confirmation prompt.')
+    print(colors '  %{cyan}-n=/--name=%{reset}       [(b)ase/(e)xt/(f)ull] operate on base, extensions or entire name.')
+    print(colors '  %{cyan}-o/--overwrite%{reset}    Enable overwrite for insert mode.')
+    print(colors '  %{cyan}-p=/--pos=%{reset}        Position to insert/replace/deletion from. Pre/postfix \'e\' to specify from the end.')
+    print(colors '  %{cyan}-r/--recurse%{reset}      Recurse directories for all files.')
+    print(colors '  %{cyan}-s=/--start=%{reset}      Start number for incremented %n patterns in insert/replace mode.')
+    print(colors '  %{cyan}-t=/--to=%{reset}         Position to delete to in delete mode. Pre/postfix \'e\' to specify from the end.')
+    print(colors '  %{cyan}-v/--version%{reset}      Show version information.')
+    print(colors '  %{cyan}-y/--yes%{reset}          Rename files without confirmation step.\n')
+    print(files .. ' will resolve to those in the current directory if omitted.\n')
+    print(colors '%{bright}EXAMPLES%{reset}')
+    print(colors '  deedpoll delete -p=2 -t=5 %{dim}# Delete characters from 2nd to 5th letter')
+    print(colors '  deedpoll case upper -n=a %{dim}# Change whole filename including the extension to uppercase')
+    print(colors '  deedpoll insert "insert %n" -i=2 -y %{dim}# Insert "insert N" at start, incrementing in 2\'s, no confirm')
+    os.exit()
+	-- LuaFormatter on
+end
+
+local function pr_version()
+    print('Deedpoll 0.0.1  Copyright (C) 2026 Jamie Drinkell')
+    os.exit()
+end
+
+local function pr_options(mode, params, opt)
+    local str_dict = {
+        c = 'CASE',
+        d = 'DELETE',
+        s = 'SEARCH',
+        i = 'INSERT',
+        r = 'REPLACE',
+        t = 'Changing names to title case.',
+        l = 'Changing names to lowercase.',
+        u = 'Changing names to uppercase.',
+        a = 'Removing accents from names.',
+        f = 'Changing names to first character uppercase.',
+        action = colors '%{yellow}ACTION:',
+        find = colors '%{yellow}FIND:',
+        replace = colors '%{yellow}REPLACE:',
+        insert = colors '%{yellow}INSERT:',
+        increment = colors '%{magenta}INCREMENT:',
+        start = colors '%{magenta}START NUMBER:',
+        sensitivity = colors '%{magenta}CASE SENSITIVITY:',
+        regex = colors '%{magenta}REGEX:'
+    }
+
+    print(colors('%{bright green}===== ' .. str_dict[mode] .. ' MODE ====='))
+    if mode == 'c' then
+        print(str_dict.action .. ' ' .. str_dict[params.case])
+    elseif mode == 'd' then
+        print(string.format('Deleting from postion %d %s to postion %s %d.',
+                            opt.pos, opt.pos_end and 'from the end' or '\b',
+                            opt.to_end and 'from the end' or '\b', opt.to))
+    elseif mode == 's' or mode == 'r' then
+        print(string.format(str_dict.find .. ' %s', params.find))
+        print(string.format(str_dict.replace .. ' %s', params.text))
+        print(string.format(
+                  str_dict.regex .. ' %s, ' .. str_dict.sensitivity .. ' %s, ' ..
+                str_dict.increment .. ' %d, ' .. str_dict.start .. ' %d',
+                  opt.regex and 'ON' or 'OFF', opt.sensitive and 'ON' or 'OFF',
+                  opt.increment, opt.start))
+    elseif mode == 'i' then
+        print(string.format('Inserting at postion %d %s %s overwrite.', opt.pos,
+                            opt.pos_end and 'from the end' or '\b',
+                            opt.overwrite and 'with' or 'without'))
+        print(string.format(str_dict.insert .. ' %s', params.find))
+        print(string.format(str_dict.increment .. ' %d, ' .. str_dict.start ..
+            ' %d', opt.increment, opt.start))
+    end
+    if opt.mock then
+        pr_info('Running in mock mode. No changes will be made.')
+    end
+    if opt.disallow then
+        pr_info(
+            'Running in disallow mode. Listed files are ignored from current directory.')
+    end
+    if opt.recurse then
+        pr_info(
+            'Running with recurse mode. Files in subdirectories will be processed.')
+    end
+    pr_info('Operating on ' .. opt.name .. ' names.')
+    if opt.yes then pr_info('Skipping confirmation!') end
+    print()
+end
+
+--- RENAME UTILITIES
+
+-- Each function takes the string and the param/opt details to rename it, and returns the renamed string.
+-- Caller is expected to have trimmed out the ext or basename depending.
+local renamers = {
+    -- Title Case Renamer
+    t = function(name, params, opt)
+        -- Source - https://stackoverflow.com/a/22548737
+        -- Posted by Joe
+        -- Retrieved 2026-11-17, License - CC BY-SA 3.0
+        function titleCase(first, rest)
+            return first:upper() .. rest:lower()
+        end
+        return string.gsub(name, "(%a)([%w_']*)", titleCase)
+    end,
+    -- Lower Case Renamer
+    l = function(name, params, opt) return name:lower() end,
+    -- Upper Case Renamer
+    u = function(name, params, opt) return name:upper() end,
+    -- Accent Remove Renamer
+    a = function(name, params, opt) return name end,
+    -- First Character Uppercase Renamer
+    f = function(name, params, opt)
+		name = name:sub(1, 1):upper() .. name:sub(2)
+        return name
+    end,
+    -- Delete Renamer
+    d = function(name, params, opt) return name end,
+    -- Insert Renamer
+    i = function(name, params, opt) return name end,
+    -- Replace Renamer
+    r = function(name, params, opt) return name end,
+    -- Search Renamer
+    s = function(name, params, opt) return name end
+}
+
+
+-- Wraps actions to handle base/ext/full renaming
+local function rename_action(name, action, params, opt)
+	if opt.name == 'base' and name:match('%..*') then
+		name = action(name:match('[^%.]*'), params, opt) .. name:match('%..*')
+	elseif opt.name == 'ext' then
+		name = name:match('[^%.]*') .. action(name:match('%..*'), params, opt)
+	elseif opt.name == 'full' or opt.name == 'base' then
+		name = action(name, params, opt)
+	end
+	return name
+end
+
+local function rename(files, action, params, opt)
+	for _, file in ipairs(files) do
+		local color = lfs.attributes(file).mode == 'directory' and '%{bright blue}' or ''
+		print(colors(color .. file .. '%{reset cyan} -> %{reset}' .. color .. rename_action(file, action, params, opt)))
+	end
+
+	local confirm = 'n'
+	if not (opt.mock or opt.yes) then
+		io.write(colors'\nContinue with operation? %{magenta}(Y/n)%{reset}: ')
+		confirm = io.read(1)
+	end
+
+	if not opt.mock and (opt.yes or confirm:find('[Yy]')) then
+		for _, file in ipairs(files) do
+			os.rename(file, rename_action(file, action, params, opt))
+			print(colors('\n%{cyan}Files renamed!'))
+		end
+	else
+		print(colors('\n%{red}Files not renamed.'))
+	end
+end
+
+-- File System
+local lfs = require('lfs')
+
+function recurse_dir(path)
+    for file in lfs.dir(path) do
+        if file ~= "." and file ~= ".." then
+            local f = path..'/'..file
+            print ("\t "..f)
+            local attr = lfs.attributes (f)
+            assert (type(attr) == "table")
+            if attr.mode == "directory" then
+                recurse_dir (f)
+            else
+                for name, value in pairs(attr) do
+                    print (name, value)
+                end
+            end
+        end
+    end
+end
+
+local function get_files(index, opt)
+    local file_list = {}
+    if not index then
+        -- Presume current directory
+        pr_info('No files/paths specified, using current directory.')
+		for file in lfs.dir(lfs.currentdir()) do
+			if file:sub(1,1) ~= '.' then table.insert(file_list, file) end
+		end
+    else
+        for i = index, #arg do
+            if not arg[i] then
+                break
+            else
+                -- Check it's not an option
+                if arg[i]:sub(1, 1) == '-' then
+                    pr_err('Please list all options before files!')
+                end
+                -- Check the file actually exists
+
+
+                -- Add it to the table
+            end
+        end
+    end
+	return file_list
+end
+
+-- CLI Parsers
+
+-- Parsesoptions and filenames after mode parameters are parsed
+local function parse_opts_files(index)
+    -- Boolean options opt lookup table
+    local opt_val = {
+        ['-c'] = 'sensitive',
+        ['-d'] = 'disallow',
+		['-f'] = 'full',
+        ['-e'] = 'regex',
+        ['-m'] = 'mock',
+        ['-o'] = 'overwrite',
+        ['-r'] = 'recurse',
+        ['-y'] = 'yes'
+    }
+
+    --- Options table
+    local opt = {
+        sensitive = false,
+        disallow = false,
+		full = false,
+        regex = false,
+        increment = 1,
+        mock = false,
+        name = 'base',
+        overwrite = false,
+        pos = 1,
+        pos_end = false,
+        recurse = false,
+        start = 1,
+        to = 1,
+        to_end = false,
+        yes = false
+    }
+
+    local first_file
+    for i = index, #arg do
+        if not arg[i] then break end
+        if arg[i]:sub(1, 1) == '-' then
+            -- Set boolean options
+            if arg[i]:find('%-[cdefmory]') then
+                opt[opt_val[arg[i]:match('%-[cdefmory]')]] = true
+            end
+            -- Handle 'e' behaviour in pos/to
+
+            -- Handle start/increment
+
+			-- Handle name type
+
+        else
+            -- Must be start of file list
+            first_file = i
+            break
+        end
+    end
+
+    return opt, get_files(first_file, opt)
+end
+
+--- CLI parsers for each mode.
+local parse = {
+    -- Case mode parser
+    c = function()
+        -- Parse arg[2]
+        local params = {}
+        params.case = arg[2] and arg[2]:sub(1, 1) or 'n'
+        if not params.case:find('[tluaf]') then
+            pr_err(
+                'Please specify a valid case mode parameter as second argument!')
+        end
+        return 3, params
+    end,
+    -- Delete mode parser
+    d = function() return 2, {} end,
+    -- Insert mode parser
+    i = function()
+        local params = {}
+        if not arg[2] or arg[2]:sub(1, 1) == '-' then
+            pr_err('Please provide text to insert as second argument!')
+        end
+        params.text = arg[2]
+        return 3, params
+    end,
+    -- Replace/Search mode parser
+    r = function()
+        local params = {}
+        if not arg[2] or arg[2]:sub(1, 1) == '-' then
+            pr_err('Please provide text to find as second argument!')
+        end
+        params.find = arg[2]
+        if not arg[3] or arg[3]:sub(1, 1) == '-' then
+            pr_err('Please provide replace text as third argument!')
+        end
+        params.text = arg[3]
+        return 4, params
+    end
+}
+
+-- Check if any arg is a version or help request
+if not arg[1] then pr_help() end
+for k, v in ipairs(arg) do
+    if v:find('-h', 1, true) then pr_help() end
+    if v:find('-v', 1, true) then pr_version() end
+    -- print(k,v)
+end
+
+local mode = arg[1]:sub(1, 1)
+if not mode:find('[cidsr]') then pr_err('Invalid mode specified!') end
+-- Index is for the next CLI item that needs parsed after parameters are understood
+local index, params = parse[mode == 's' and 'r' or mode]()
+local action = renamers[mode == 'c' and params.case or mode]
+local opt, files = parse_opts_files(index)
+pr_options(mode, params, opt)
+rename(files, action, params, opt)
