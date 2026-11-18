@@ -177,7 +177,7 @@ local function pr_options(mode, params, opt)
         a = 'Removing accents from names.',
         f = 'Changing names to first character uppercase.',
         b = 'basenames.',
-        e = 'file name extensions.',
+        e = 'filename extensions.',
         action = colors '%{yellow}ACTION:',
         find = colors '%{yellow}FIND:',
         replace = colors '%{yellow}REPLACE:',
@@ -190,7 +190,6 @@ local function pr_options(mode, params, opt)
         from = colors '%{magenta}DELETE FROM:',
         to = colors '%{magenta}DELETE TO:',
         overwrite = colors '%{magenta}OVERWRITE:'
-
     }
 
     print(colors('%{bright green}===== ' .. dict[mode] .. ' MODE ====='))
@@ -236,7 +235,7 @@ local function pr_options(mode, params, opt)
             'Running with recurse mode. Files in subdirectories will be processed.')
     end
     pr_info('Operating on ' ..
-        (opt.name == 'f' and 'full file names.' or dict[opt.name]))
+        (opt.name == 'f' and 'full filenames.' or dict[opt.name]))
     if opt.yes then pr_info('Skipping confirmation!') end
     print()
 end
@@ -261,16 +260,112 @@ local renamers = {
     -- Upper Case Renamer
     u = function(name, params, opt) return name:upper() end,
     -- Accent Remove Renamer
-    a = function(name, params, opt) return name end,
+    a = function(name, params, opt)
+        -- Source - https://stackoverflow.com/a/56275419
+        -- Posted by Gamora
+        -- Retrieved 2026-11-17, License - CC BY-SA 4.0
+        local tableAccents = {
+			["À"] = "A",
+			["Á"] = "A",
+			["Â"] = "A",
+			["Ã"] = "A",
+			["Ä"] = "A",
+			["Å"] = "A",
+			["Æ"] = "AE",
+			["Ç"] = "C",
+			["È"] = "E",
+			["É"] = "E",
+			["Ê"] = "E",
+			["Ë"] = "E",
+			["Ì"] = "I",
+			["Í"] = "I",
+			["Î"] = "I",
+			["Ï"] = "I",
+			["Ð"] = "D",
+			["Ñ"] = "N",
+			["Ò"] = "O",
+			["Ó"] = "O",
+			["Ô"] = "O",
+			["Õ"] = "O",
+			["Ö"] = "O",
+			["Ø"] = "O",
+			["Ù"] = "U",
+			["Ú"] = "U",
+			["Û"] = "U",
+			["Ü"] = "U",
+			["Ý"] = "Y",
+			["Þ"] = "P",
+			["ß"] = "s",
+			["à"] = "a",
+			["á"] = "a",
+			["â"] = "a",
+			["ã"] = "a",
+			["ä"] = "a",
+			["å"] = "a",
+			["æ"] = "ae",
+			["ç"] = "c",
+			["è"] = "e",
+			["é"] = "e",
+			["ê"] = "e",
+			["ë"] = "e",
+			["ì"] = "i",
+			["í"] = "i",
+			["î"] = "i",
+			["ï"] = "i",
+			["ð"] = "eth",
+			["ñ"] = "n",
+			["ò"] = "o",
+			["ó"] = "o",
+			["ô"] = "o",
+			["õ"] = "o",
+			["ö"] = "o",
+			["ø"] = "o",
+			["ù"] = "u",
+			["ú"] = "u",
+			["û"] = "u",
+			["ü"] = "u",
+			["ý"] = "y",
+			["þ"] = "p",
+			["ÿ"] = "y"
+		}
+        local normalisedString = ''
+        local normalisedString = str:gsub("[%z\1-\127\194-\244][\128-\191]*",
+                                          tableAccents)
+        return normalisedString
+    end,
     -- First Character Uppercase Renamer
     f = function(name, params, opt)
         name = name:sub(1, 1):upper() .. name:sub(2)
         return name
     end,
     -- Delete Renamer
-    d = function(name, params, opt) return name end,
+    d = function(name, params, opt)
+		local index1, index2, index3, index4
+		local len = name:len()
+		if not opt.pos_end and not opt.to_end then
+			index1, index2, index3, index4 = 1, opt.pos - 1, opt.to, -1
+		elseif opt.pos_end and not opt.to_end then
+			index1, index2, index3, index4 = 1, opt.to - 1, -opt.pos + 1, opt.pos <= 1 and 1 or -1
+		elseif not opt.pos_end and opt.to_end then
+			-- TODO
+			index1, index2, index3, index4 = 1,2,3,4
+		elseif opt.pos_end and opt.to_end then
+			-- TODO
+			index1, index2, index3, index4 = 1,2,3,4
+		end
+			name = name:sub(index1, index2) .. name:sub(index3, index4)
+		return name
+    end,
     -- Insert Renamer
-    i = function(name, params, opt) return name end,
+    i = function(name, params, opt)
+        if opt.pos_end then
+            return name:sub(1, name:len() - opt.pos) .. params.text ..
+                name:sub(name:len() - opt.pos + 1)
+        else
+            return name:sub(1, opt.pos) .. params.text .. name:sub(opt.pos + 1)
+        end
+
+    end,
     -- Replace Renamer
     r = function(name, params, opt) return name end,
     -- Search Renamer
@@ -290,8 +385,9 @@ local function rename_action(name, action, params, opt)
 end
 
 local function rename(files, action, params, opt)
+	-- TODO: Check for name collisions
     for _, file in ipairs(files) do
-        local color = lfs.attributes(file).mode == 'directory' and
+        local color = lfs.attributes(file, 'mode') == 'directory' and
             '%{bright blue}' or ''
         print(colors(color .. file .. '%{reset cyan} -> %{reset}' .. color ..
             rename_action(file, action, params, opt)))
@@ -346,19 +442,21 @@ local function get_files(index, opt)
         end
     else
         for i = index, #arg do
-            if not arg[i] then
-                break
-            else
-                -- Check it's not an option
-                if arg[i]:sub(1, 1) == '-' then
-                    pr_err('Please list all options before files!')
-                end
-                -- Check the file actually exists
-
-                -- Add it to the table
-            end
+			-- Check it's not an option
+			if arg[i]:sub(1, 1) == '-' then
+				pr_err('Please list all options before files!')
+			end
+			-- Check the file actually exists
+			if not lfs.attributes(arg[i]) then
+				pr_err('File "' .. arg[i] .. '" does not exist!')
+			end
+			-- Add it to the table (remove any trailing / for directories)
+			table.insert(file_list, arg[i]:match(('[^/]*')))
         end
     end
+	table.sort(file_list, function(a, b)
+		return a:lower() < b:lower()
+	end)
     return file_list
 end
 
@@ -383,7 +481,6 @@ local function parse_opts_files(index)
         to = 1,
         to_end = false,
         yes = false,
-
         -- Lookup values
         ['-c'] = 'sensitive',
         ['-d'] = 'disallow',
@@ -440,7 +537,7 @@ local function parse_opts_files(index)
                 if type(opt.start) == 'string' then
                     opt.start = tonumber(opt.start)
                 end
-                -- Check for errors
+                -- Check and correct errors
                 if not opt.name then opt.name = 'b' end
                 if not opt.pos then opt.pos = 1 end
                 if not opt.to then opt.to = 1 end
