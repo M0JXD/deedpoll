@@ -1,7 +1,8 @@
 -- Copyright 2026 Jamie Drinkell
 
--- COLORS
--- ansicolors.lua v1.0.3 (2026-08)
+---------- ANSICOLOR LIBRARY ----------
+
+-- ansicolors.lua v1.0.4 (2026-11)
 
 -- Copyright (c) 2009 Rob Hoelz <rob@hoelzro.net>
 -- Copyright (c) 2011 Enrique García Cota <enrique.garcia.cota@gmail.com>
@@ -25,7 +26,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 
--- support detection
+--- Detect if color mode would be supported.
 local function colorSupport()
     local isWindows = type(package) == 'table' and type(package.config) ==
         'string' and package.config:sub(1, 1) == '\\'
@@ -33,6 +34,7 @@ local function colorSupport()
         true
 end
 
+--- Color Mode Keys table.
 local keys = {
     -- reset
     reset = 0,
@@ -96,19 +98,21 @@ local function colors(str)
     return replaceCodes('%{reset}' .. str .. '%{reset}')
 end
 
--- DEEDPOLL
+---------- DEEDPOLL ----------
 
--- PRINT UTILS
-
+--- Error printing utility.
+-- Automatically exits with error message when called.
 local function pr_err(str)
     print(colors '%{red}ERROR:%{reset} ' .. str)
     os.exit()
 end
 
+--- Info printing utility.
 local function pr_info(str)
     print(colors '%{blue}INFO:%{reset} ' .. str)
 end
 
+--- Prints help info and exits.
 local function pr_help()
     -- LuaFormatter off
     local mode = colors('%{green}[MODE]')
@@ -118,7 +122,8 @@ local function pr_help()
     local usage = string.format(
 		colors('%{bright}Usage:%{reset}') .. ' deedpoll %s %s %s %s', mode, parameters, options, files)
     print(usage)
-    print('Default behaviour is to operate on the basename. All option values default to 1.\n')
+    print('Default behaviour is to operate on the basename. All option values default to 1.')
+	print('Deedpool confirms changes before running. Yellow arrows indicate changed names for quick reviewing.\n')
     print(mode)
     print(colors '  %{cyan}case    (c)%{reset}  Changes character cases.')
     print(colors '  %{cyan}delete  (d)%{reset}  Delete characters from a position to another.')
@@ -137,7 +142,7 @@ local function pr_help()
     print(options)
     print(colors '  %{cyan}-c/--case%{reset}         Enable case sensitivity in replace mode.')
     print(colors '  %{cyan}-d/--disallow%{reset}     Treat passed filenames as ones to disallow from current directory.')
-    print(colors '  %{cyan}-e/--exp%{reset}          Enable regular expressions in replace mode find strings.')
+    print(colors '  %{cyan}-e/--exp%{reset}          Treat replace mode find strings as Lua patterns..')
 	print(colors '  %{cyan}-f/--full%{reset}         Use full file listing including hidden dotfiles.')
     print(colors '  %{cyan}-h/--help%{reset}         Show help text.')
     print(colors '  %{cyan}-i=/--increment=%{reset}  Value to increment by for %n patterns in insert/replace mode.')
@@ -159,11 +164,13 @@ local function pr_help()
 	-- LuaFormatter on
 end
 
+--- Prints version information and exits.
 local function pr_version()
     print('Deedpoll 0.0.1  Copyright (C) 2026 Jamie Drinkell')
     os.exit()
 end
 
+--- Prints option information for given mode.
 local function pr_options(mode, params, opt)
     local dict = {
         c = 'CASE',
@@ -240,19 +247,20 @@ local function pr_options(mode, params, opt)
     print()
 end
 
---- RENAME UTILITIES
-
+--- Closure to enumerate with given increment
 local function enumerate(start, increment)
-	local current = start
-	local inc = increment
-	return function ()
-		current = current + inc
-		return current
-	end
+    local current = start
+    local inc = increment
+    return function()
+        current = current + inc
+        return current
+    end
 end
 
 -- Each function takes the string and the param/opt details to rename it, and returns the renamed string.
 -- Caller is expected to have trimmed out the ext or basename depending.
+
+--- Table of main renamer functions
 local renamers = {
     -- Title Case Renamer
     t = function(name, params, opt)
@@ -274,73 +282,73 @@ local renamers = {
         -- Posted by Gamora
         -- Retrieved 2026-11-17, License - CC BY-SA 4.0
         local tableAccents = {
-			["À"] = "A",
-			["Á"] = "A",
-			["Â"] = "A",
-			["Ã"] = "A",
-			["Ä"] = "A",
-			["Å"] = "A",
-			["Æ"] = "AE",
-			["Ç"] = "C",
-			["È"] = "E",
-			["É"] = "E",
-			["Ê"] = "E",
-			["Ë"] = "E",
-			["Ì"] = "I",
-			["Í"] = "I",
-			["Î"] = "I",
-			["Ï"] = "I",
-			["Ð"] = "D",
-			["Ñ"] = "N",
-			["Ò"] = "O",
-			["Ó"] = "O",
-			["Ô"] = "O",
-			["Õ"] = "O",
-			["Ö"] = "O",
-			["Ø"] = "O",
-			["Ù"] = "U",
-			["Ú"] = "U",
-			["Û"] = "U",
-			["Ü"] = "U",
-			["Ý"] = "Y",
-			["Þ"] = "P",
-			["ß"] = "s",
-			["à"] = "a",
-			["á"] = "a",
-			["â"] = "a",
-			["ã"] = "a",
-			["ä"] = "a",
-			["å"] = "a",
-			["æ"] = "ae",
-			["ç"] = "c",
-			["è"] = "e",
-			["é"] = "e",
-			["ê"] = "e",
-			["ë"] = "e",
-			["ì"] = "i",
-			["í"] = "i",
-			["î"] = "i",
-			["ï"] = "i",
-			["ð"] = "eth",
-			["ñ"] = "n",
-			["ò"] = "o",
-			["ó"] = "o",
-			["ô"] = "o",
-			["õ"] = "o",
-			["ö"] = "o",
-			["ø"] = "o",
-			["ù"] = "u",
-			["ú"] = "u",
-			["û"] = "u",
-			["ü"] = "u",
-			["ý"] = "y",
-			["þ"] = "p",
-			["ÿ"] = "y"
-		}
-        local normalisedString = ''
-        local normalisedString = str:gsub("[%z\1-\127\194-\244][\128-\191]*",
-                                          tableAccents)
-        return normalisedString
+            ["À"] = "A",
+            ["Á"] = "A",
+            ["Â"] = "A",
+            ["Ã"] = "A",
+            ["Ä"] = "A",
+            ["Å"] = "A",
+            ["Æ"] = "AE",
+            ["Ç"] = "C",
+            ["È"] = "E",
+            ["É"] = "E",
+            ["Ê"] = "E",
+            ["Ë"] = "E",
+            ["Ì"] = "I",
+            ["Í"] = "I",
+            ["Î"] = "I",
+            ["Ï"] = "I",
+            ["Ð"] = "D",
+            ["Ñ"] = "N",
+            ["Ò"] = "O",
+            ["Ó"] = "O",
+            ["Ô"] = "O",
+            ["Õ"] = "O",
+            ["Ö"] = "O",
+            ["Ø"] = "O",
+            ["Ù"] = "U",
+            ["Ú"] = "U",
+            ["Û"] = "U",
+            ["Ü"] = "U",
+            ["Ý"] = "Y",
+            ["Þ"] = "P",
+            ["ß"] = "s",
+            ["à"] = "a",
+            ["á"] = "a",
+            ["â"] = "a",
+            ["ã"] = "a",
+            ["ä"] = "a",
+            ["å"] = "a",
+            ["æ"] = "ae",
+            ["ç"] = "c",
+            ["è"] = "e",
+            ["é"] = "e",
+            ["ê"] = "e",
+            ["ë"] = "e",
+            ["ì"] = "i",
+            ["í"] = "i",
+            ["î"] = "i",
+            ["ï"] = "i",
+            ["ð"] = "eth",
+            ["ñ"] = "n",
+            ["ò"] = "o",
+            ["ó"] = "o",
+            ["ô"] = "o",
+            ["õ"] = "o",
+            ["ö"] = "o",
+            ["ø"] = "o",
+            ["ù"] = "u",
+            ["ú"] = "u",
+            ["û"] = "u",
+            ["ü"] = "u",
+            ["ý"] = "y",
+            ["þ"] = "p",
+            ["ÿ"] = "y"
+        }
+        local normalised_string = ''
+        local normalised_string = str:gsub("[%z\1-\127\194-\244][\128-\191]*",
+                                           tableAccents)
+        return normalised_string
     end,
     -- First Character Uppercase Renamer
     f = function(name, params, opt)
@@ -349,21 +357,22 @@ local renamers = {
     end,
     -- Delete Renamer
     d = function(name, params, opt)
-		local index1, index2, index3, index4
-		local len = name:len()
-		if not opt.pos_end and not opt.to_end then
-			index1, index2, index3, index4 = 1, opt.pos - 1, opt.to, -1
-		elseif opt.pos_end and not opt.to_end then
-			index1, index2, index3, index4 = 1, opt.to - 1, -opt.pos + 1, opt.pos <= 1 and 1 or -1
-		elseif not opt.pos_end and opt.to_end then
-			-- TODO
-			index1, index2, index3, index4 = 1,2,3,4
-		elseif opt.pos_end and opt.to_end then
-			-- TODO
-			index1, index2, index3, index4 = 1,2,3,4
-		end
-			name = name:sub(index1, index2) .. name:sub(index3, index4)
-		return name
+        local index1, index2, index3, index4
+        local len = name:len()
+        if not opt.pos_end and not opt.to_end then
+            index1, index2, index3, index4 = 1, opt.pos - 1, opt.to, -1
+        elseif opt.pos_end and not opt.to_end then
+            index1, index2, index3, index4 = 1, opt.to - 1, -opt.pos + 1,
+                                             opt.pos <= 1 and 1 or -1
+        elseif not opt.pos_end and opt.to_end then
+            -- TODO
+            index1, index2, index3, index4 = 1, 2, 3, 4
+        elseif opt.pos_end and opt.to_end then
+            -- TODO
+            index1, index2, index3, index4 = 1, 2, 3, 4
+        end
+        name = name:sub(index1, index2) .. name:sub(index3, index4)
+        return name
     end,
     -- Insert Renamer
     i = function(name, params, opt)
@@ -377,21 +386,19 @@ local renamers = {
     end,
     -- Replace Renamer
     r = function(name, params, opt)
-		return name:gsub(params.find, params.text, 1)
-	end,
+        return name:gsub(params.find, params.text, 1)
+    end,
     -- Search Renamer
-    s = function(name, params, opt) return
-		name
-	end
+    s = function(name, params, opt) return name end
 }
 
--- Wraps actions to handle base/ext/full renaming
+--- Handles leading paths and base/ext/full behaviour before running rename action.
 local function rename_action(name, action, params, opt)
-	local prepath = ''
-	if name:find('/') then
-		prepath = name:match('.*/')
-		name = name:match('[^/]+$')
-	end
+    local prepath = ''
+    if name:find('/') then
+        prepath = name:match('.*/')
+        name = name:match('[^/]+$')
+    end
 
     if opt.name == 'b' and name:match('%..*') then
         name = action(name:match('[^%.]*'), params, opt) .. name:match('%..*')
@@ -403,13 +410,18 @@ local function rename_action(name, action, params, opt)
     return prepath .. name
 end
 
+--- Run rename action of files with given options and parameters.
 local function rename(files, action, params, opt)
-	-- TODO: Check for name collisions
+    -- TODO: Check for name collisions
     for _, file in ipairs(files) do
         local color = lfs.attributes(file, 'mode') == 'directory' and
             '%{bright blue}' or ''
-        print(colors(color .. file .. '%{reset cyan} -> %{reset}' .. color ..
-            rename_action(file, action, params, opt)))
+        local edit = '%{reset bright yellow} -> %{reset}'
+        local new_name = rename_action(file, action, params, opt)
+        if new_name == file then
+            edit = '%{reset bright cyan} -> %{reset}'
+        end
+        print(colors(color .. file .. edit .. color .. new_name))
     end
 
     local confirm = 'n'
@@ -428,7 +440,6 @@ local function rename(files, action, params, opt)
     end
 end
 
--- File System
 local lfs = require('lfs')
 
 function recurse_dir(path)
@@ -449,6 +460,7 @@ function recurse_dir(path)
     end
 end
 
+--- Get's list of files from remaining CLI arguments, or failing that the current directory.
 local function get_files(index, opt)
     local file_list = {}
     if not index then
@@ -461,27 +473,23 @@ local function get_files(index, opt)
         end
     else
         for i = index, #arg do
-			-- Check it's not an option
-			if arg[i]:sub(1, 1) == '-' then
-				pr_err('Please list all options before files!')
-			end
-			-- Check the file actually exists
-			if not lfs.attributes(arg[i]) then
-				pr_err('File "' .. arg[i] .. '" does not exist!')
-			end
-			-- Add it to the table (remove any trailing / for directories)
-			table.insert(file_list, (arg[i]:gsub('/$', '')))
+            -- Check it's not an option
+            if arg[i]:sub(1, 1) == '-' then
+                pr_err('Please list all options before files!')
+            end
+            -- Check the file actually exists
+            if not lfs.attributes(arg[i]) then
+                pr_err('File "' .. arg[i] .. '" does not exist!')
+            end
+            -- Add it to the table (remove any trailing / for directories)
+            table.insert(file_list, (arg[i]:gsub('/$', '')))
         end
     end
-	table.sort(file_list, function(a, b)
-		return a:lower() < b:lower()
-	end)
+    table.sort(file_list, function(a, b) return a:lower() < b:lower() end)
     return file_list
 end
 
--- CLI Parsers
-
--- Parsesoptions and filenames after mode parameters are parsed
+-- Parses options and filenames after mode parameters are parsed.
 local function parse_opts_files(index)
     --- Options table
     local opt = {
@@ -573,7 +581,7 @@ local function parse_opts_files(index)
     return opt, get_files(first_file, opt)
 end
 
---- CLI parsers for each mode.
+--- Table of CLI parameter parsers for each mode.
 local parse = {
     -- Case mode parser
     c = function()
