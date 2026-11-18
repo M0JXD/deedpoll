@@ -242,6 +242,15 @@ end
 
 --- RENAME UTILITIES
 
+local function enumerate(start, increment)
+	local current = start
+	local inc = increment
+	return function ()
+		current = current + inc
+		return current
+	end
+end
+
 -- Each function takes the string and the param/opt details to rename it, and returns the renamed string.
 -- Caller is expected to have trimmed out the ext or basename depending.
 local renamers = {
@@ -335,7 +344,7 @@ local renamers = {
     end,
     -- First Character Uppercase Renamer
     f = function(name, params, opt)
-        name = name:sub(1, 1):upper() .. name:sub(2)
+        name = name:sub(1, 1):upper() .. name:sub(2):lower()
         return name
     end,
     -- Delete Renamer
@@ -367,13 +376,23 @@ local renamers = {
 
     end,
     -- Replace Renamer
-    r = function(name, params, opt) return name end,
+    r = function(name, params, opt)
+		return name:gsub(params.find, params.text, 1)
+	end,
     -- Search Renamer
-    s = function(name, params, opt) return name end
+    s = function(name, params, opt) return
+		name
+	end
 }
 
 -- Wraps actions to handle base/ext/full renaming
 local function rename_action(name, action, params, opt)
+	local prepath = ''
+	if name:find('/') then
+		prepath = name:match('.*/')
+		name = name:match('[^/]+$')
+	end
+
     if opt.name == 'b' and name:match('%..*') then
         name = action(name:match('[^%.]*'), params, opt) .. name:match('%..*')
     elseif opt.name == 'e' then
@@ -381,7 +400,7 @@ local function rename_action(name, action, params, opt)
     elseif opt.name == 'f' or opt.name == 'b' then
         name = action(name, params, opt)
     end
-    return name
+    return prepath .. name
 end
 
 local function rename(files, action, params, opt)
@@ -451,7 +470,7 @@ local function get_files(index, opt)
 				pr_err('File "' .. arg[i] .. '" does not exist!')
 			end
 			-- Add it to the table (remove any trailing / for directories)
-			table.insert(file_list, arg[i]:match(('[^/]*')))
+			table.insert(file_list, (arg[i]:gsub('/$', '')))
         end
     end
 	table.sort(file_list, function(a, b)
@@ -598,7 +617,6 @@ if not arg[1] then pr_help() end
 for k, v in ipairs(arg) do
     if v:find('-h', 1, true) then pr_help() end
     if v:find('-v', 1, true) then pr_version() end
-    -- print(k,v)
 end
 
 local mode = arg[1]:sub(1, 1)
