@@ -91,7 +91,7 @@ local function pr_info(str)
 	print(colors'%{blue}INFO:%{reset} ' .. str)
 end
 
---- Prints help info and exits.
+--- Print help info and exit.
 local function pr_help()
 	-- LuaFormatter off
 	local mode = colors('%{green}[MODE]')
@@ -147,7 +147,7 @@ local function pr_help()
 	-- LuaFormatter on
 end
 
---- Prints version information and exits.
+--- Print version information and exit.
 local function pr_version()
 	print('Deedpoll 0.0.1  Copyright (C) 2026 Jamie Drinkell')
 	os.exit()
@@ -297,11 +297,12 @@ local renamers = {
 		if not opt.pos_end and not opt.to_end then
 			index1, index2, index3, index4 = 1, opt.pos - 1, opt.to, -1
 		elseif opt.pos_end and not opt.to_end then
-			index1, index2, index3, index4 = 1, opt.to - 1
+			index1, index2 = 1, opt.to - 1
 			index3, index4 = -opt.pos + 1, opt.pos <= 1 and 1 or -1
 		elseif not opt.pos_end and opt.to_end then
 			-- TODO
-			index1, index2, index3, index4 = 1, 2, 3, 4
+			index1, index2 = 1, -opt.to - 1
+			index3, index4 = opt.pos + 1, opt.pos <= 1 and 1 or -1
 		elseif opt.pos_end and opt.to_end then
 			-- TODO
 			index1, index2, index3, index4 = 1, 2, 3, 4
@@ -346,13 +347,28 @@ end
 
 --- Run rename action of files with given options and parameters.
 local function rename(files, action, params, opt)
-	-- TODO: Check for name collisions
+	local function name_clash(names)
+		local seen = {}
+		for _, value in pairs(names) do
+			if seen[value] then return true end
+			seen[value] = true
+		end
+		return false
+	end
+
+	local new_names = {}
 	for _, file in ipairs(files) do
 		local color = lfs.attributes(file, 'mode') == 'directory' and '%{bright blue}' or ''
 		local arrow = '%{reset bright yellow} -> %{reset}'
 		local new_name = rename_action(file, action, params, opt)
+		table.insert(new_names, new_name)
 		if new_name == file then arrow = '%{reset bright cyan} -> %{reset}' end
 		print(colors(color .. file .. arrow .. color .. new_name))
+	end
+
+	if name_clash(new_names) then
+		print()
+		pr_err('Name clash(es) occured! Can\'t rename.')
 	end
 
 	local confirm = 'n'
