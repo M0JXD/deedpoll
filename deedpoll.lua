@@ -153,8 +153,8 @@ local function pr_help()
     print(colors '  %{cyan}-t=/--to=%{reset}         Position to delete to in delete mode.')
     print(colors '  %{cyan}-v/--version%{reset}      Show version information.')
     print(colors '  %{cyan}-y/--yes%{reset}          Rename files without confirmation step.\n')
-    print(files .. ' will resolve to those in the current directory if omitted.\n')
 	print(colors'%{bright red}NOTES%{reset}')
+    print('  ' .. files .. ' will resolve to those in the current directory if omitted.')
 	print(colors '  Default behaviour is to operate on basename, with all values defaulted to 1.')
 	print(colors '  Unless "mock" or "yes" are enabled, Deedpoll requires confirmation.')
 	print(colors '  For pos/to, pre/postfix the letter \'e\' to the value to specify from the end.\n')
@@ -421,12 +421,12 @@ local function rename(files, action, params, opt)
     for _, file in ipairs(files) do
         local color = lfs.attributes(file, 'mode') == 'directory' and
             '%{bright blue}' or ''
-        local edit = '%{reset bright yellow} -> %{reset}'
+        local arrow = '%{reset bright yellow} -> %{reset}'
         local new_name = rename_action(file, action, params, opt)
         if new_name == file then
-            edit = '%{reset bright cyan} -> %{reset}'
+            arrow = '%{reset bright cyan} -> %{reset}'
         end
-        print(colors(color .. file .. edit .. color .. new_name))
+        print(colors(color .. file .. arrow .. color .. new_name))
     end
 
     local confirm = 'n'
