@@ -11,8 +11,6 @@ In most terminals, Deedpoll's output is colourful, offering easy semantic insigh
 
 ```
 Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
-Default behaviour is to operate on the basename. All option values default to 1.
-Deedpool confirms changes before running. Yellow arrows indicate changed names for quick reviewing.
 
 [MODE]
   case    (c)  Changes character cases.
@@ -28,32 +26,39 @@ Deedpool confirms changes before running. Yellow arrows indicate changed names f
     upper   (u)  Changes names to upper case
     accents (a)  Removes accents in the file name.
     first   (f)  Makes first character uppercase.
-  FIND  Text to find in search/replace mode. Wildcards ? and * are supported.
-  TEXT  Text for search/insert/replace mode. Use %n, %0n, %00n etc. to enumerate.
+  FIND  Find text for search/replace. Wildcards ? and * are supported.
+  TEXT  Text for search/insert/replace. Use %n, %0n, %00n etc. to enumerate.
 
 [OPTIONS]
   -c/--case         Enable case sensitivity in replace mode.
-  -d/--disallow     Treat passed filenames as ones to disallow from current directory.
+  -d/--disallow     Listed files are not processed from current directory.
   -e/--exp          Treat replace mode find strings as Lua patterns.
-  -f/--full         Use full file listing including hidden dotfiles.
+  -f/--full         Use full file list including hidden dotfiles.
   -h/--help         Show help text.
-  -i=/--increment=  Value to increment by for %n patterns in insert/replace mode.
-  -m/--mock         Do a mock run without changing files or confirmation prompt.
-  -n=/--name=       [(b)ase/(e)xt/(f)ull] operate on base, extensions or entire name.
+  -i=/--increment=  Increment step for %n patterns in insert/replace mode.
+  -m/--mock         Mock run without changing files or confirmation prompt.
+  -n=/--name=       [(b)ase/(e)xt/(f)ull] aspect of filename to change.
   -o/--overwrite    Enable overwrite for insert mode.
-  -p=/--pos=        Position to insert/delete from. Pre/postfix 'e' to specify from the end.
+  -p=/--pos=        Start position for insert/delete.
   -r/--recurse      Recurse directories for all files.
-  -s=/--start=      Start number for incremented %n patterns in insert/replace mode.
-  -t=/--to=         Position to delete to in delete mode. Pre/postfix 'e' to specify from the end.
+  -s=/--start=      Start number for incremented %n patterns.
+  -t=/--to=         Position to delete to in delete mode.
   -v/--version      Show version information.
   -y/--yes          Rename files without confirmation step.
 
-[FILES] will resolve to those in the current directory if omitted.
+NOTES
+  [FILES] will resolve to those in the current directory if omitted.
+  Default behaviour is to operate on basename, with all values defaulted to 1.
+  Unless "mock" or "yes" are enabled, Deedpoll requires confirmation.
+  For pos/to, pre/postfix the letter 'e' to the value to specify from the end.
 
 EXAMPLES
-  deedpoll delete -p=2 -t=5 # Delete characters from 2nd to 5th letter
-  deedpoll case upper -n=a # Change whole filename including the extension to uppercase
-  deedpoll insert "insert %n" -i=2 -y # Insert "insert N" at start, incrementing in 2's, no confirm
+  # Delete characters from 2nd to 5th letter
+  deedpoll delete --pos=2 --to=5
+  # Change whole filename including the extension to uppercase
+  deedpoll case upper -n=full
+  # Insert "text {n}" at start, incrementing in 2's, no confirmation
+  deedpoll insert "text %n" -i=2 -y
 ```
 
 ### Regular Expression Support
