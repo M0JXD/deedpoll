@@ -142,14 +142,14 @@ local function pr_help()
     print(options)
     print(colors '  %{cyan}-c/--case%{reset}         Enable case sensitivity in replace mode.')
     print(colors '  %{cyan}-d/--disallow%{reset}     Treat passed filenames as ones to disallow from current directory.')
-    print(colors '  %{cyan}-e/--exp%{reset}          Treat replace mode find strings as Lua patterns..')
+    print(colors '  %{cyan}-e/--exp%{reset}          Treat replace mode find strings as Lua patterns.')
 	print(colors '  %{cyan}-f/--full%{reset}         Use full file listing including hidden dotfiles.')
     print(colors '  %{cyan}-h/--help%{reset}         Show help text.')
     print(colors '  %{cyan}-i=/--increment=%{reset}  Value to increment by for %n patterns in insert/replace mode.')
     print(colors '  %{cyan}-m/--mock%{reset}         Do a mock run without changing files or confirmation prompt.')
     print(colors '  %{cyan}-n=/--name=%{reset}       [(b)ase/(e)xt/(f)ull] operate on base, extensions or entire name.')
     print(colors '  %{cyan}-o/--overwrite%{reset}    Enable overwrite for insert mode.')
-    print(colors '  %{cyan}-p=/--pos=%{reset}        Position to insert/replace/deletion from. Pre/postfix \'e\' to specify from the end.')
+    print(colors '  %{cyan}-p=/--pos=%{reset}        Position to insert/delete from. Pre/postfix \'e\' to specify from the end.')
     print(colors '  %{cyan}-r/--recurse%{reset}      Recurse directories for all files.')
     print(colors '  %{cyan}-s=/--start=%{reset}      Start number for incremented %n patterns in insert/replace mode.')
     print(colors '  %{cyan}-t=/--to=%{reset}         Position to delete to in delete mode. Pre/postfix \'e\' to specify from the end.')
@@ -346,14 +346,13 @@ local renamers = {
             ["ÿ"] = "y"
         }
         local normalised_string = ''
-        local normalised_string = str:gsub("[%z\1-\127\194-\244][\128-\191]*",
-                                           tableAccents)
+        normalised_string = name:gsub("[%z\1-\127\194-\244][\128-\191]*",
+                                      tableAccents)
         return normalised_string
     end,
     -- First Character Uppercase Renamer
     f = function(name, params, opt)
-        name = name:sub(1, 1):upper() .. name:sub(2):lower()
-        return name
+        return name:sub(1, 1):upper() .. name:sub(2):lower()
     end,
     -- Delete Renamer
     d = function(name, params, opt)
@@ -396,14 +395,15 @@ local renamers = {
 local function rename_action(name, action, params, opt)
     local prepath = ''
     if name:find('/') then
-        prepath = name:match('.*/')
+        prepath = colors(name:match('.*/'))
         name = name:match('[^/]+$')
     end
 
     if opt.name == 'b' and name:match('%..*') then
         name = action(name:match('[^%.]*'), params, opt) .. name:match('%..*')
     elseif opt.name == 'e' then
-        name = name:match('[^%.]*') .. action(name:match('%..*'), params, opt)
+		local ext = name:match('%..*') and action(name:match('%..*'), params, opt) or ''
+        name = name:match('[^%.]*') .. ext
     elseif opt.name == 'f' or opt.name == 'b' then
         name = action(name, params, opt)
     end
@@ -426,7 +426,7 @@ local function rename(files, action, params, opt)
 
     local confirm = 'n'
     if not (opt.mock or opt.yes) then
-        io.write(colors '\nContinue with operation? %{magenta}(Y/n)%{reset}: ')
+        io.write(colors '\nContinue with operation? %{underline}(Y/n)%{reset}: ')
         confirm = io.read(1)
     end
 
@@ -441,24 +441,6 @@ local function rename(files, action, params, opt)
 end
 
 local lfs = require('lfs')
-
-function recurse_dir(path)
-    for file in lfs.dir(path) do
-        if file ~= "." and file ~= ".." then
-            local f = path .. '/' .. file
-            print("\t " .. f)
-            local attr = lfs.attributes(f)
-            assert(type(attr) == "table")
-            if attr.mode == "directory" then
-                recurse_dir(f)
-            else
-                for name, value in pairs(attr) do
-                    print(name, value)
-                end
-            end
-        end
-    end
-end
 
 --- Get's list of files from remaining CLI arguments, or failing that the current directory.
 local function get_files(index, opt)
@@ -532,6 +514,7 @@ local function parse_opts_files(index)
             if arg[i]:find('%-[cdefmory]') then
                 opt[opt[arg[i]:match('%-[cdefmory]')]] = true
             end
+
             -- Handle "=" options
             if arg[i]:find('%-[inpst]') then
                 if not arg[i]:find('=') then
@@ -539,9 +522,10 @@ local function parse_opts_files(index)
                         "Value options must be of the form -o=value or --opt=value!")
                 end
                 opt[opt[arg[i]:match('%-[inpst]')]] = arg[i]:match('=.*'):sub(2)
-                -- Name
+
+                -- Fix name operation
                 opt.name = opt.name:match('[bef]')
-                if not opt.name then opt.name = 'b' end
+
                 -- Handle 'e' behaviour in pos/to
                 if type(opt.pos) == 'string' then
                     if opt.pos:find('e') then
@@ -556,6 +540,7 @@ local function parse_opts_files(index)
                     end
                     opt.to = tonumber(opt.to:match('%d'))
                 end
+
                 -- Convert number arguments
                 if type(opt.increment) == 'string' then
                     opt.increment = tonumber(opt.increment)
@@ -564,12 +549,24 @@ local function parse_opts_files(index)
                 if type(opt.start) == 'string' then
                     opt.start = tonumber(opt.start)
                 end
+
                 -- Check and correct errors
-                if not opt.name then opt.name = 'b' end
-                if not opt.pos then opt.pos = 1 end
-                if not opt.to then opt.to = 1 end
-                if not opt.increment then opt.increment = 1 end
-                if not opt.start then opt.start = 1 end
+                if not opt.name then
+                    pr_err('Could not parse "name" argument!')
+                end
+                if not opt.pos then
+                    pr_err('Could not parse "position" argument!')
+                end
+                if not opt.to then
+                    pr_err('Could not parse "to" argument!')
+                end
+                if not opt.increment then
+                    pr_err('Could not parse "increment" argument!')
+                end
+                if not opt.start then
+                    pr_err('Could not parse "start" argument!')
+                end
+
             end
         else
             -- Must be start of file list
@@ -577,7 +574,6 @@ local function parse_opts_files(index)
             break
         end
     end
-
     return opt, get_files(first_file, opt)
 end
 
