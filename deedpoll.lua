@@ -410,13 +410,19 @@ end
 --- Get's list of files from remaining CLI arguments, or failing that the current directory.
 local function get_files(index, opt)
 	local file_list = {}
-	if not index then
-		-- Presume current directory
-		pr_info('No files/paths specified, using current directory.')
+	local rev = {}
+	local function get_dir()
 		for file in lfs.dir(lfs.currentdir()) do
 			if file:sub(1, 1) ~= '.' then table.insert(file_list, file) end
 		end
-	else
+	end
+
+	-- Presume current directory, or get for disallow mode
+	if not index or opt.disallow then
+		get_dir()
+	end
+
+	if index then
 		for i = index, #arg do
 			-- Check it's not an option
 			if arg[i]:sub(1, 1) == '-' then
@@ -426,9 +432,23 @@ local function get_files(index, opt)
 			if not lfs.attributes(arg[i]) then
 				pr_err('File "' .. arg[i] .. '" does not exist!')
 			end
-			-- Add it to the table (remove any trailing / for directories)
-			table.insert(file_list, (arg[i]:gsub('/$', '')))
+			-- Remove any trailing / on directories
+			local filename = arg[i]:gsub('/$', '')
+			if opt.disallow then
+				-- Search the list and remove it
+				for k,v in ipairs(file_list) do
+					if v == filename then
+						table.remove(file_list, k)
+						break
+					end
+				end
+			else
+				-- Add it to the list
+				table.insert(file_list, filename)
+			end
 		end
+	else
+		pr_info('No files/paths specified, using current directory.')
 	end
 	table.sort(file_list, function(a, b) return a:lower() < b:lower() end)
 	return file_list
