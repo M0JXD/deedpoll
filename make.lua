@@ -52,5 +52,7 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 		os.execute("echo '#!/usr/bin/env lua' | cat - build/deedpoll > temp && mv temp build/deedpoll")
 		os.execute("chmod +x build/deedpoll")
 	end
-	io.write('BUILDING DONE!\n')
+	print('BUILDING DONE')
+else
+	print('NO OPTION "' .. arg[1] .. '"')
 end

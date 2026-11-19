@@ -73,17 +73,13 @@ Deedpoll exists to do simple renaming tasks with less mental effort than it woul
 
 On the converse, Deedpoll enables the user to use Lua patterns, which are simpler albeit more limited (but still very capable).
 
-### Examples
-
 ## Install
-
-### Unix Systems
 
 Most systems should provide installable packages for Lua and LuaFileSystem.
 Releases offers the ready to run script with a shebang added that can be used directly and placed with the user's other binaries.
 
-Alternatively, clone the source and use `make && sudo make install` to install to */usr/local*.
-The **INSTALL** variable can be set with a different install prefix, e.g. `make install INSTALL=~/.local`.
+Alternatively, clone the source and use `lua make.lua && lua make.lua install` to install to */usr/local*.
+The second argument can be set with a different install prefix, e.g. `lua make.lua install ~/.local`.
 
 ### Windows
 
@@ -92,5 +88,6 @@ Binaries for Windows (supporting XP and newer) are made with [luainstaller](http
 ## TODO
 
 - Finish renamer implementations
+- Add recurse mode support
 - Add translations method
 - Build Windows version
