@@ -242,8 +242,15 @@ local function modulo_n(str, opt)
 	if str:find('%%0*n') then
 		local enumerate_val = opt._enumerator()
 		return str:gsub('%%0*n', function (mat)
-			local val = mat:match('0+') and mat:match('0+') or ''
-			return val .. enumerate_val
+			if mat:find('0') then
+				local leading_zeros = mat:match('0+'):len()
+				local no_len = tostring(enumerate_val):len()
+				leading_zeros = leading_zeros - no_len + 1
+				if leading_zeros < 0  then leading_zeros = 0 end
+				return string.rep('0', leading_zeros) .. enumerate_val
+			else
+				return enumerate_val
+			end
 		end)
 	end
 	return str
