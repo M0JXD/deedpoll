@@ -418,9 +418,7 @@ local function get_files(index, opt)
 	end
 
 	-- Presume current directory, or get for disallow mode
-	if not index or opt.disallow then
-		get_dir()
-	end
+	if not index or opt.disallow then get_dir() end
 
 	if index then
 		for i = index, #arg do
@@ -436,7 +434,7 @@ local function get_files(index, opt)
 			local filename = arg[i]:gsub('/$', '')
 			if opt.disallow then
 				-- Search the list and remove it
-				for k,v in ipairs(file_list) do
+				for k, v in ipairs(file_list) do
 					if v == filename then
 						table.remove(file_list, k)
 						break
