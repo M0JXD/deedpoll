@@ -102,10 +102,10 @@ local function pr_help()
 	print(usage)
 	print(mode)
 	print(colors '  %{cyan}case    (c)%{reset}  Changes character cases.')
-	print(colors '  %{cyan}delete  (d)%{reset}  Delete characters from a position to another.')
+	print(colors '  %{cyan}delete  (d)%{reset}  Delete characters between specified positions.')
 	print(colors '  %{cyan}search  (s)%{reset}  Search and replace within file contents.')
-	print(colors '  %{cyan}insert  (i)%{reset}  Insert text.')
-	print(colors '  %{cyan}replace (r)%{reset}  Replace text.\n')
+	print(colors '  %{cyan}insert  (i)%{reset}  Insert text into filename.')
+	print(colors '  %{cyan}replace (r)%{reset}  Replace text in filename.\n')
 	print(parameters)
 	print(colors '  %{bright}ACTION%{reset}  Case change to apply in case mode.')
 	print(colors '    %{cyan}title   (t)%{reset}  Changes names to title case.')
@@ -116,21 +116,21 @@ local function pr_help()
 	print(colors '  %{bright}FIND%{reset}  Find text for search/replace. Wildcards ? and * are supported.')
 	print(colors '  %{bright}TEXT%{reset}  Text for search/insert/replace. Use %n, %0n, %00n etc. to enumerate.\n')
 	print(options)
-	print(colors '  %{cyan}-c/--case%{reset}         Enable case sensitivity in replace mode.')
-	print(colors '  %{cyan}-d/--disallow%{reset}     Listed files are not processed from current directory.')
-	print(colors '  %{cyan}-e/--exp%{reset}          Treat replace mode find strings as Lua patterns.')
-	print(colors '  %{cyan}-f/--full%{reset}         Use full file list including hidden dotfiles.')
-	print(colors '  %{cyan}-h/--help%{reset}         Show help text.')
-	print(colors '  %{cyan}-i=/--increment=%{reset}  Increment step for %n patterns in insert/replace mode.')
-	print(colors '  %{cyan}-m/--mock%{reset}         Mock run without changing files or confirmation prompt.')
-	print(colors '  %{cyan}-n=/--name=%{reset}       [(b)ase/(e)xt/(f)ull] aspect of filename to change.')
-	print(colors '  %{cyan}-o/--overwrite%{reset}    Enable overwrite for insert mode.')
-	print(colors '  %{cyan}-p=/--pos=%{reset}        Start position for insert/delete.')
-	print(colors '  %{cyan}-r/--recurse%{reset}      Recurse directories for all files.')
-	print(colors '  %{cyan}-s=/--start=%{reset}      Start number for incremented %n patterns.')
-	print(colors '  %{cyan}-t=/--to=%{reset}         Position to delete to in delete mode.')
-	print(colors '  %{cyan}-v/--version%{reset}      Show version information.')
-	print(colors '  %{cyan}-y/--yes%{reset}          Rename files without confirmation step.\n')
+	print(colors '  %{cyan}-c/--case%{reset}       Enable case sensitivity in replace mode.')
+	print(colors '  %{cyan}-d/--disallow%{reset}   Listed files are not processed from current directory.')
+	print(colors '  %{cyan}-e/--exp%{reset}        Treat replace mode find strings as Lua patterns.')
+	print(colors '  %{cyan}-f/--full%{reset}       Use full file list including hidden dotfiles.')
+	print(colors '  %{cyan}-h/--help%{reset}       Show help text.')
+	print(colors '  %{cyan}-i=/--inc=%{reset}      Increment step for %n patterns in insert/replace mode.')
+	print(colors '  %{cyan}-m/--mock%{reset}       Mock run without changing files or confirmation prompt.')
+	print(colors '  %{cyan}-n=/--name=%{reset}     [(b)ase/(e)xt/(f)ull] aspect of filename to change.')
+	print(colors '  %{cyan}-o/--overwrite%{reset}  Enable overwrite for insert mode.')
+	print(colors '  %{cyan}-p=/--pos=%{reset}      Start position for insert/delete.')
+	print(colors '  %{cyan}-r/--recurse%{reset}    Recurse directories for all files.')
+	print(colors '  %{cyan}-s=/--start=%{reset}    Start number for incremented %n patterns.')
+	print(colors '  %{cyan}-t=/--to=%{reset}       Position to delete to in delete mode.')
+	print(colors '  %{cyan}-v/--version%{reset}    Show version information.')
+	print(colors '  %{cyan}-y/--yes%{reset}        Rename files without confirmation step.\n')
 	print(colors'%{bright red}NOTES%{reset}')
 	print('  ' .. files .. ' will resolve to those in the current directory if omitted.')
 	print(colors '  Default behaviour is to operate on basename, with all values set to 1.')
@@ -259,7 +259,7 @@ local function modulo_n(str, opt)
 end
 
 --- Table of renamer functions.
--- Caller is expected to have trimmed out the ext or basename depending.
+-- Caller is expected to have trimmed out the ext or basename depending, and done initial setup
 local renamers = {
 	-- Title Case Renamer
 	t = function(name, params, opt)
@@ -314,7 +314,6 @@ local renamers = {
 	-- Delete Renamer
 	d = function(name, params, opt)
 		local index1, index2, index3, index4
-		local len = name:len()
 		if not opt.pos_end and not opt.to_end then
 			index1, index2, index3, index4 = 1, opt.pos - 1, opt.to, -1
 		elseif opt.pos_end and not opt.to_end then
@@ -345,9 +344,7 @@ local renamers = {
 	-- Replace Renamer
 	r = function(name, params, opt)
 		local text = params.text
-		if name:find(params.find) then
-			text = modulo_n(params.text, opt)
-		end
+		if name:find(params.find) then text = modulo_n(params.text, opt) end
 		return name:gsub(params.find, text, 1)
 	end,
 	-- Search Renamer
@@ -385,7 +382,27 @@ local function rename(files, action, params, opt)
 		params.find = params.find:gsub("%%%?", ".*")
 	end
 
-	-- Set up enumerator
+	-- Source - https://stackoverflow.com/a/11402486
+	-- Posted by Bart Kiers, modified by community. See post 'Timeline' for change history
+	-- Retrieved 2026-11-19, License - CC BY-SA 3.0
+	function case_insensitive_pattern(pattern)
+		-- find an optional '%' (group 1) followed by any character (group 2)
+		local p = pattern:gsub("(%%?)(.)", function(percent, letter)
+			if percent ~= "" or not letter:match("%a") then
+				-- if the '%' matched, or `letter` is not a letter, return "as is"
+				return percent .. letter
+			else
+				-- else, return a case-insensitive character class of the matched letter
+				return string.format("[%s%s]", letter:lower(), letter:upper())
+			end
+		end)
+		return p
+	end
+
+	-- Make patterns case insenstive if need be.
+	if not opt.sensitive then params.find = case_insensitive_pattern(params.find) end
+
+	-- Set up enumerator.
 	opt._enumerator = enumerate(opt.start, opt.increment)
 
 	local function name_clash(names)
@@ -425,7 +442,7 @@ local function rename(files, action, params, opt)
 		for _, file in ipairs(files) do
 			os.rename(file, rename_action(file, action, params, opt))
 		end
-		print(colors('\n%{cyan}Files renamed!'))
+		print(colors('\n%{green}Files renamed!'))
 	else
 		print(colors('\n%{red}Files not renamed.'))
 	end

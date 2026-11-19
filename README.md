@@ -14,10 +14,10 @@ Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
 
 [MODE]
   case    (c)  Changes character cases.
-  delete  (d)  Delete characters from a position to another.
+  delete  (d)  Delete characters between specified positions.
   search  (s)  Search and replace within file contents.
-  insert  (i)  Insert text.
-  replace (r)  Replace text.
+  insert  (i)  Insert text into filename.
+  replace (r)  Replace text in filename.
 
 [PARAMETERS]
   ACTION  Case change to apply in case mode.
@@ -30,25 +30,25 @@ Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
   TEXT  Text for search/insert/replace. Use %n, %0n, %00n etc. to enumerate.
 
 [OPTIONS]
-  -c/--case         Enable case sensitivity in replace mode.
-  -d/--disallow     Listed files are not processed from current directory.
-  -e/--exp          Treat replace mode find strings as Lua patterns.
-  -f/--full         Use full file list including hidden dotfiles.
-  -h/--help         Show help text.
-  -i=/--increment=  Increment step for %n patterns in insert/replace mode.
-  -m/--mock         Mock run without changing files or confirmation prompt.
-  -n=/--name=       [(b)ase/(e)xt/(f)ull] aspect of filename to change.
-  -o/--overwrite    Enable overwrite for insert mode.
-  -p=/--pos=        Start position for insert/delete.
-  -r/--recurse      Recurse directories for all files.
-  -s=/--start=      Start number for incremented %n patterns.
-  -t=/--to=         Position to delete to in delete mode.
-  -v/--version      Show version information.
-  -y/--yes          Rename files without confirmation step.
+  -c/--case       Enable case sensitivity in replace mode.
+  -d/--disallow   Listed files are not processed from current directory.
+  -e/--exp        Treat replace mode find strings as Lua patterns.
+  -f/--full       Use full file list including hidden dotfiles.
+  -h/--help       Show help text.
+  -i=/--inc=      Increment step for %n patterns in insert/replace mode.
+  -m/--mock       Mock run without changing files or confirmation prompt.
+  -n=/--name=     [(b)ase/(e)xt/(f)ull] aspect of filename to change.
+  -o/--overwrite  Enable overwrite for insert mode.
+  -p=/--pos=      Start position for insert/delete.
+  -r/--recurse    Recurse directories for all files.
+  -s=/--start=    Start number for incremented %n patterns.
+  -t=/--to=       Position to delete to in delete mode.
+  -v/--version    Show version information.
+  -y/--yes        Rename files without confirmation step.
 
 NOTES
   [FILES] will resolve to those in the current directory if omitted.
-  Default behaviour is to operate on basename, with all values defaulted to 1.
+  Default behaviour is to operate on basename, with all values set to 1.
   Unless "mock" or "yes" are enabled, Deedpoll requires confirmation.
   For pos/to, pre/postfix the letter 'e' to the value to specify from the end.
 
@@ -59,6 +59,8 @@ EXAMPLES
   deedpoll case upper -n=full
   # Insert "text {n}" at start, incrementing in 2's, no confirmation
   deedpoll insert "text %n" -i=2 -y
+  # Replace "old" with "new" in current directory except for "ignore.txt"
+  deedpoll replace "old" "new" -d ignore.txt
 ```
 
 ### Regular Expression Support
@@ -87,7 +89,7 @@ Binaries for Windows (supporting XP and newer) are made with [luainstaller](http
 
 ## TODO
 
-- Finish renamer implementations
-- Add recurse mode support
+- UNIT TESTS!! Verifying behaviour will be tedious with high liklihood of regressions until this is done
+- Make feature complete
 - Add translations method
 - Build Windows version
