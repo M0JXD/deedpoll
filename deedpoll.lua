@@ -375,6 +375,7 @@ end
 
 --- Run rename action of files with given options and parameters.
 local function rename(files, action, params, opt)
+
 	-- Fix replace string if patterns is not enabled
 	if not opt.pattern then
 		-- Prefix magic characters
@@ -383,6 +384,9 @@ local function rename(files, action, params, opt)
 		params.find = params.find:gsub("%%%*", ".*")
 		params.find = params.find:gsub("%%%?", ".*")
 	end
+
+	-- Set up enumerator
+	opt._enumerator = enumerate(opt.start, opt.increment)
 
 	local function name_clash(names)
 		local seen = {}
@@ -414,11 +418,14 @@ local function rename(files, action, params, opt)
 		confirm = io.read(1)
 	end
 
+	-- Reset enumerator
+	opt._enumerator = enumerate(opt.start, opt.increment)
+
 	if not opt.mock and (opt.yes or confirm:find('[Yy]')) then
 		for _, file in ipairs(files) do
 			os.rename(file, rename_action(file, action, params, opt))
-			print(colors('\n%{cyan}Files renamed!'))
 		end
+		print(colors('\n%{cyan}Files renamed!'))
 	else
 		print(colors('\n%{red}Files not renamed.'))
 	end
@@ -559,9 +566,6 @@ local function parse_opts_files(index)
 			break
 		end
 	end
-
-	-- Set up enumerator
-	opt._enumerator = enumerate(opt.start, opt.increment)
 	return opt, get_files(first_file, opt)
 end
 
