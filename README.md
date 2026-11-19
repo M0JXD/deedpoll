@@ -78,8 +78,8 @@ On the converse, Deedpoll enables the user to use Lua patterns, which are simple
 Most systems should provide installable packages for Lua and LuaFileSystem.
 Releases offers the ready to run script with a shebang added that can be used directly and placed with the user's other binaries.
 
-Alternatively, clone the source and use `lua make.lua && lua make.lua install` to install to */usr/local*.
-The second argument can be set with a different install prefix, e.g. `lua make.lua install ~/.local`.
+Alternatively, clone the source and use `./make && ./make install` to install to */usr/local*.
+The second argument can be set with a different install prefix, e.g. `./make install ~/.local`.
 
 ### Windows
 
