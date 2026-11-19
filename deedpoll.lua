@@ -194,8 +194,8 @@ local function pr_options(mode, params, opt)
 		print(string.format('%s %d %s', dict.from, opt.pos, opt.pos_end and 'from the end.' or '\b'))
 		print(string.format('%s %d %s', dict.to, opt.to, opt.to_end and 'from the end.' or '\b'))
 	elseif mode == 's' or mode == 'r' then
-		print(string.format('%s %s', dict.find, params.find))
-		print(string.format('%s %s', dict.replace, params.text))
+		print(string.format('%s "%s"', dict.find, params.find))
+		print(string.format('%s "%s"', dict.replace, params.text))
 		print(string.format('%s %s, %s %s, %s %d, %s %d',
 			dict.regex, opt.regex and 'ON' or 'OFF',
 			dict.sensitivity, opt.sensitive and 'ON' or 'OFF',
@@ -203,7 +203,7 @@ local function pr_options(mode, params, opt)
 			dict.start, opt.start
 		))
 	elseif mode == 'i' then
-		print(string.format('%s %s', dict.insert, params.find))
+		print(string.format('%s "%s"', dict.insert, params.text))
 		print(string.format('%s %d %s',
 			dict.insert_pos, opt.pos, opt.pos_end and 'from the end.' or '\b'))
 		print(string.format('%s %s, %s %d, %s %d',
@@ -229,12 +229,24 @@ end
 
 --- Closure to enumerate with given increment
 local function enumerate(start, increment)
-	local current = start
+	local count = start - increment
 	local inc = increment
 	return function()
-		current = current + inc
-		return current
+		count = count + inc
+		return count
 	end
+end
+
+--- Find and replace %n patterns
+local function modulo_n(str, opt)
+	if str:find('%%0*n') then
+		local enumerate_val = opt._enumerator()
+		return str:gsub('%%0*n', function (mat)
+			local val = mat:match('0+') and mat:match('0+') or ''
+			return val .. enumerate_val
+		end)
+	end
+	return str
 end
 
 --- Table of renamer functions.
@@ -312,11 +324,12 @@ local renamers = {
 	end,
 	-- Insert Renamer
 	i = function(name, params, opt)
+		local text = modulo_n(params.text, opt)
 		if opt.pos_end then
 			return name:sub(1, name:len() - opt.pos) .. params.text ..
 				name:sub(name:len() - opt.pos + 1)
 		else
-			return name:sub(1, opt.pos) .. params.text .. name:sub(opt.pos + 1)
+			return name:sub(1, opt.pos - 1) .. text .. name:sub(opt.pos)
 		end
 
 	end,
@@ -504,6 +517,9 @@ local function parse_opts_files(index)
 			break
 		end
 	end
+
+	-- Set up enumerator
+	opt._enumerator = enumerate(opt.start, opt.increment)
 	return opt, get_files(first_file, opt)
 end
 
