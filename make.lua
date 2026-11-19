@@ -8,6 +8,8 @@ local isWindows = type(package) == 'table' and type(package.config) == 'string' 
 local install = arg[2] and arg[2] or '/usr/local'
 
 local function generate_test_suite()
+	lfs.mkdir('test')
+	lfs.mkdir('test/dir1')
 	lfs.mkdir('test/dir1/dir space')
 	io.open('test/short', 'w+'):write('find'):close()
 	io.open('test/test.txt', 'w+'):write('find2'):close()
