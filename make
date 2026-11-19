@@ -1,3 +1,4 @@
+#!/usr/bin/env lua
 --- Make & Test system for Deedpoll
 
 local lfs = require('lfs')
@@ -17,7 +18,7 @@ local function generate_test_suite()
 	io.open('test/test two three (brackets).txt', 'w+'):write('find4'):close()
 	io.open('test/test_underscore.txt', 'w+'):write('find5'):close()
 	io.open('test/újjáválaszthatóságáról', 'w+'):write('find6'):close()
-	io.open('test/A really Long name with No meaningful Case Pattern.txt', 'w+'):write('find7'):close()
+	io.open('test/A really Long test Name with No meaningful Case Pattern.txt', 'w+'):write('find7'):close()
 end
 
 if arg[1] == 't' or arg[1] == 'test' then
@@ -42,7 +43,7 @@ elseif arg[1] == 'c' or arg[1] == 'clean' then
 	io.flush()
 	local clean = isWindows and 'rmdir /S /Q build & rmdir /S /Q test' or 'rm -r build test'
 	os.execute(clean)
-	print('CLEANING DONE!\n')
+	print('CLEANING DONE!')
 elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	print('BUILDING...')
 	lfs.mkdir('build')
