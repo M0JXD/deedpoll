@@ -343,7 +343,13 @@ local renamers = {
 
 	end,
 	-- Replace Renamer
-	r = function(name, params, opt) return name:gsub(params.find, params.text, 1) end,
+	r = function(name, params, opt)
+		local text = params.text
+		if name:find(params.find) then
+			text = modulo_n(params.text, opt)
+		end
+		return name:gsub(params.find, text, 1)
+	end,
 	-- Search Renamer
 	s = function(name, params, opt) return name end
 }
@@ -369,6 +375,15 @@ end
 
 --- Run rename action of files with given options and parameters.
 local function rename(files, action, params, opt)
+	-- Fix replace string if patterns is not enabled
+	if not opt.pattern then
+		-- Prefix magic characters
+		params.find = params.find:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+		-- Convert wildcards to greedy match pattern
+		params.find = params.find:gsub("%%%*", ".*")
+		params.find = params.find:gsub("%%%?", ".*")
+	end
+
 	local function name_clash(names)
 		local seen = {}
 		for _, value in pairs(names) do
