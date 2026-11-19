@@ -177,7 +177,7 @@ local function pr_options(mode, params, opt)
 		increment = colors '%{magenta}INCREMENT:',
 		start = colors '%{magenta}START NUMBER:',
 		sensitivity = colors '%{magenta}CASE SENSITIVITY:',
-		regex = colors '%{magenta}REGEX:',
+		pattern = colors '%{magenta}PATTERN:',
 		from = colors '%{magenta}DELETE FROM:',
 		to = colors '%{magenta}DELETE TO:',
 		overwrite = colors '%{magenta}OVERWRITE:'
@@ -197,7 +197,7 @@ local function pr_options(mode, params, opt)
 		print(string.format('%s "%s"', dict.find, params.find))
 		print(string.format('%s "%s"', dict.replace, params.text))
 		print(string.format('%s %s, %s %s, %s %d, %s %d',
-			dict.regex, opt.regex and 'ON' or 'OFF',
+			dict.pattern, opt.pattern and 'ON' or 'OFF',
 			dict.sensitivity, opt.sensitive and 'ON' or 'OFF',
 			dict.increment, opt.increment,
 			dict.start, opt.start
@@ -241,12 +241,12 @@ end
 local function modulo_n(str, opt)
 	if str:find('%%0*n') then
 		local enumerate_val = opt._enumerator()
-		return str:gsub('%%0*n', function (mat)
+		return str:gsub('%%0*n', function(mat)
 			if mat:find('0') then
 				local leading_zeros = mat:match('0+'):len()
 				local no_len = tostring(enumerate_val):len()
 				leading_zeros = leading_zeros - no_len + 1
-				if leading_zeros < 0  then leading_zeros = 0 end
+				if leading_zeros < 0 then leading_zeros = 0 end
 				return string.rep('0', leading_zeros) .. enumerate_val
 			else
 				return enumerate_val
@@ -442,7 +442,7 @@ local function parse_opts_files(index)
 		sensitive = false,
 		disallow = false,
 		full = false,
-		regex = false,
+		pattern = false,
 		increment = 1,
 		mock = false,
 		name = 'b',
@@ -458,7 +458,7 @@ local function parse_opts_files(index)
 		['-c'] = 'sensitive',
 		['-d'] = 'disallow',
 		['-f'] = 'full',
-		['-e'] = 'regex',
+		['-e'] = 'pattern',
 		['-m'] = 'mock',
 		['-o'] = 'overwrite',
 		['-r'] = 'recurse',
