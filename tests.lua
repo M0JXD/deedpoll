@@ -11,7 +11,49 @@
 -- @module tests
 local M = {}
 
-M[1] = {
+--[[ TEST TEMPLATE
+
+M[new()] = {
+	name = '',
+	cmd = 'deedpoll ',
+	input = {
+		''
+	},
+	expected = {
+		''
+	}
+}
+
+]]
+
+--- Create and return a new test number entry.
+local function new_test_number()
+	local count = 0
+	return function ()
+		count = count + 1
+		return count
+	end
+end
+
+--- Create counter
+local new = new_test_number()
+
+-- LuaFormatter off
+
+-- CASE MODE TESTS
+
+M[new()] = {
+	name = 'Title case.',
+	cmd = 'deedpoll case title',
+	input = {
+		'title mode test.txt'
+	},
+	expected = {
+		'Title Mode Test.txt'
+	}
+}
+
+M[new()] = {
 	name = 'Lower case on full filenames.',
 	cmd = 'deedpoll case lower --name=full',
 	input = {
@@ -20,11 +62,20 @@ M[1] = {
 	expected = {
 		'test.txt'
 	}
-
-
 }
 
-M[2] = {
+M[new()] = {
+	name = 'Upper case on full filenames.',
+	cmd = 'deedpoll case upper --name=full',
+	input = {
+		'test.txt'
+	},
+	expected = {
+		'TEST.TXT'
+	}
+}
+
+M[new()] = {
 	name = 'Remove accents.',
 	cmd = 'deedpoll case accent',
 	input = {
@@ -33,10 +84,9 @@ M[2] = {
 	expected = {
 		'ujjavalaszthatosagarol'
 	}
-
 }
 
-M[3] = {
+M[new()] = {
 	name = 'First character case.',
 	cmd = 'deedpoll case first',
 	input = {
@@ -46,5 +96,16 @@ M[3] = {
 		'A really long test name with no meaningful case pattern.txt'
 	}
 }
+
+-- DELETE MODE TESTS
+
+-- INSERT MODE TESTS
+
+-- REPLACE MODE TESTS
+
+-- SEARCH MODE TESTS
+-- TODD: Search mode is inherently different as it searches within files
+
+-- LuaFormatter on
 
 return M
