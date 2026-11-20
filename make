@@ -1,30 +1,56 @@
 #!/usr/bin/env lua
+-- Copyright 2026 Jamie Drinkell
 --- Make & Test system for Deedpoll
 
 local lfs = require('lfs')
+local colors = require('lib.ansicolors')
+local tests = require('tests')
 
 local isWindows = type(package) == 'table' and type(package.config) == 'string' and
 	package.config:sub(1, 1) == '\\'
 
 local install = arg[2] and arg[2] or '/usr/local'
 
-local function generate_test_suite()
-	lfs.mkdir('test')
-	lfs.mkdir('test/dir1')
-	lfs.mkdir('test/dir1/dir space')
-	io.open('test/short', 'w+'):write('find'):close()
-	io.open('test/test.txt', 'w+'):write('find2'):close()
-	io.open('test/test two.txt', 'w+'):write('find3'):close()
-	io.open('test/test two three (brackets).txt', 'w+'):write('find4'):close()
-	io.open('test/test_underscore.txt', 'w+'):write('find5'):close()
-	io.open('test/újjáválaszthatóságáról', 'w+'):write('find6'):close()
-	io.open('test/A really Long test Name with No meaningful Case Pattern.txt', 'w+'):write('find7')
-		:close()
-end
-
 if arg[1] == 't' or arg[1] == 'test' then
-	print('BEGINNING TESTS...')
-	generate_test_suite()
+	local null_redirect = isWindows and 'nul' or '/dev/null'
+	local delete_dir = isWindows and 'rmdir /s /q ' or 'rm -rf '
+	local function cleanup()
+		lfs.chdir('..')
+		os.execute(delete_dir .. 'test')
+	end
+
+	print(colors'%{bright cyan}===== DEEDPOLL TEST SUITE =====')
+	for _, test in ipairs(tests) do
+
+		io.write(colors'%{yellow}TEST: ' .. test.name)
+
+		-- Create temp test directory for this run
+		lfs.mkdir('test')
+		lfs.chdir('test')
+
+		-- Create test file(s)
+		for _, name in ipairs(test.input) do
+			io.open(name, "w"):close()
+		end
+
+		-- Run rename operation
+		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. ' --yes > ' ..
+			null_redirect)
+
+		-- Check expected filename(s) exist
+		for _, name in ipairs(test.expected) do
+			if not lfs.attributes(name) then
+				io.write(colors' [%{red}FAIL%{reset}]\n')
+				print('Failure encountered! Did not finish running tests.')
+				cleanup()
+				os.exit()
+			else
+				io.write(colors' [%{green}PASS%{reset}]\n')
+			end
+		end
+		cleanup()
+	end
+
 elseif arg[1] == 'i' or arg[1] == 'install' then
 	if isWindows then
 	else
@@ -32,7 +58,7 @@ elseif arg[1] == 'i' or arg[1] == 'install' then
 		os.execute(string.format('cp build/deedpoll %s/bin || sudo cp build/deedpoll %s/bin',
 			install, install))
 	end
-	print('INSTALL DONE')
+
 elseif arg[1] == 'u' or arg[1] == 'uninstall' then
 	if isWindows then
 	else
@@ -40,13 +66,13 @@ elseif arg[1] == 'u' or arg[1] == 'uninstall' then
 		os.execute(string.format('rm -f %s/bin/deedpoll || sudo rm -f %s/bin/deedpoll', install,
 			install))
 	end
-	print('UNINSTALL DONE')
+
 elseif arg[1] == 'c' or arg[1] == 'clean' then
 	print('CLEANING...')
 	io.flush()
 	local clean = isWindows and 'rmdir /S /Q build & rmdir /S /Q test' or 'rm -r build test'
 	os.execute(clean)
-	print('CLEANING DONE!')
+
 elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	print('BUILDING...')
 	lfs.mkdir('build')
@@ -59,7 +85,9 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 			"echo '#!/usr/bin/env lua' | cat - build/deedpoll > temp && mv temp build/deedpoll")
 		os.execute("chmod +x build/deedpoll")
 	end
-	print('BUILDING DONE')
+
 else
 	print('NO OPTION "' .. arg[1] .. '"')
 end
+
+print('ALL DONE 😊')
