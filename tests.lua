@@ -1,22 +1,10 @@
 -- Copyright 2026 Jamie Drinkell
---- Suite of tests for Deedpoll
+--- Suite of tests for Deedpoll.
 -- @module tests
 local M = {}
 
---[[ TEST TEMPLATE
-test{
-	name = '',
-	cmd = 'deedpoll ',
-	input = {
-		''
-	},
-	expected = {
-		''
-	}
-}
-]]
-
--------------------- UTILITIES --------------------
+--- Utilities
+-- @section utilities
 
 --- Test number generating closure.
 local function test_number_generator()
@@ -26,8 +14,6 @@ local function test_number_generator()
 		return count
 	end
 end
-
---- Create test counter.
 local test_counter = test_number_generator()
 
 --- Add a new test.
@@ -41,7 +27,8 @@ local function test(test)
 	M[test_counter()] = test
 end
 
--------------------- TESTS --------------------
+--- Tests
+-- @section tests
 
 -- LuaFormatter off
 
@@ -104,12 +91,56 @@ test{
 
 -- DELETE MODE TESTS
 
+test{
+	name = 'Delete first two letters.',
+	cmd = 'deedpoll delete --pos=1 --to=3',
+	input= {
+		'test.txt'
+	},
+	expected = {
+		'st.txt'
+	}
+}
+
 -- INSERT MODE TESTS
+test{
+	name = 'Insert text at start.',
+	cmd = 'deedpoll insert "TEXT"',
+	input = {
+		'test.txt'
+	},
+	expected = {
+		'TEXTtest.txt'
+	}
+}
+
+test{
+	name = 'Insert text at end.',
+	cmd = 'deedpoll insert --pos=1e "TEXT"',
+	input = {
+		'test.txt'
+	},
+	expected = {
+		'testTEXT.txt'
+	}
+}
+
+test{
+	name = 'Enumerate values',
+	cmd = 'deedpoll insert "%n - "',
+	input = {
+		'a.txt',
+		'b.txt',
+		'c.txt'
+	},
+	expected = {
+		'1 - a.txt',
+		'2 - b.txt',
+		'3 - c.txt'
+	}
+}
 
 -- REPLACE MODE TESTS
-
--- SEARCH MODE TESTS
--- TODD: Search mode is inherently different as it searches within files
 
 -- LuaFormatter on
 
