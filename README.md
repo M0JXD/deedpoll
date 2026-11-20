@@ -89,7 +89,7 @@ Binaries for Windows (supporting XP and newer) are made with [luainstaller](http
 
 ## TODO
 
-- UNIT TESTS!! Verifying behaviour will be tedious with high liklihood of regressions until this is done
+- UNIT TESTS!! Verifying behaviour will be tedious with high likelihood of regressions until this is done
 - Make feature complete
 - Add translations method
 - Build Windows version
