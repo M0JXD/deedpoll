@@ -20,7 +20,8 @@ local test_counter = test_number_generator()
 -- Deedpoll's tests are defined with tables
 -- @param test Table of test details
 -- @param test.name Name of the test
--- @param test.cmd The command to run
+-- @param test.cmd The command to run.
+-- @param test.files[OPT] Filenames that should be appended to the command
 -- @param test.input Array of starting names for files
 -- @param test.expected Array of expected names for files after rename
 local function test(test)
@@ -144,6 +145,46 @@ test{
 -- REPLACE MODE TESTS
 
 -- BASE/EXT/FULL TESTS
+
+-- MISC
+
+test{
+	name = 'Disallow mode.',
+	cmd = 'deedpoll case upper --disallow',
+	files = {
+		'not me.txt'
+	},
+	input = {
+		'make me upper.txt',
+		'not me.txt'
+	},
+	expected = {
+		'MAKE ME UPPER.txt',
+		'not me.txt'
+	}
+}
+
+test{
+	name = 'Lua pattern replace.',
+	cmd = 'deedpoll replace "%d" "ABC" --exp',
+	input = {
+		'123'
+	},
+	expected = {
+		'ABC'
+	}
+}
+
+test{
+	name = 'Mock mode.',
+	cmd = 'deedpoll case upper --mock',
+	input = {
+		'lowercase.txt'
+	},
+	expected = {
+		'lowercase.txt'
+	}
+}
 
 -- LuaFormatter on
 
