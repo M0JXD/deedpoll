@@ -18,7 +18,7 @@ local test_counter = test_number_generator()
 
 --- Add a new test.
 -- Deedpoll's tests are defined with tables
--- @param test a test suite table
+-- @param test Table of test details
 -- @param test.name Name of the test
 -- @param test.cmd The command to run
 -- @param test.input Array of starting names for files
@@ -82,10 +82,10 @@ test{
 	name = 'First character case.',
 	cmd = 'deedpoll case first',
 	input = {
-		'A really Long test Name with No meaningful Case Pattern.txt'
+		'the FIRST character tEST.txt'
 	},
 	expected = {
-		'A really long test name with no meaningful case pattern.txt'
+		'The first character test.txt'
 	}
 }
 
@@ -103,6 +103,7 @@ test{
 }
 
 -- INSERT MODE TESTS
+
 test{
 	name = 'Insert text at start.',
 	cmd = 'deedpoll insert "TEXT"',
@@ -141,6 +142,8 @@ test{
 }
 
 -- REPLACE MODE TESTS
+
+-- BASE/EXT/FULL TESTS
 
 -- LuaFormatter on
 
