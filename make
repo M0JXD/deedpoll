@@ -11,11 +11,15 @@ local isWindows = type(package) == 'table' and type(package.config) == 'string' 
 
 local install = arg[2] and arg[2] or '/usr/local'
 
-local function run_command(cmd)
-	if os.execute(cmd) ~= '0' then
-		io.write(colors'[%{red}FAIL%{reset}%{reset}]\n')
+--- Run a command with a custom success checker
+-- @param cmd Command to run.
+-- @param check Check function to run after command, return truthy on pass
+local function run_command(cmd, check)
+	os.execute(cmd)
+	if check() then
+		io.write(colors' [%{green}SUCCESS%{reset}%{reset}]\n')
 	else
-		io.write(colors'[%{green}DONE%{reset}%{reset}]\n')
+		io.write(colors' [%{red}FAIL%{reset}%{reset}]\n')
 	end
 end
 
@@ -24,6 +28,7 @@ if arg[1] == 't' or arg[1] == 'test' then
 	local delete_dir = isWindows and 'rmdir /s /q ' or 'rm -rf '
 
 	print(colors'%{bright cyan}===== DEEDPOLL TEST SUITE =====')
+
 	for _, test in ipairs(tests) do
 		io.write(colors'%{yellow}TEST: ' .. test.name)
 
@@ -41,9 +46,7 @@ if arg[1] == 't' or arg[1] == 'test' then
 		-- Check expected filename(s) exist
 		local pass = colors(' [%{green}PASS%{reset}]\n')
 		for _, name in ipairs(test.expected) do
-			if not lfs.attributes(name) then
-				pass = colors(' [%{red}FAIL%{reset}]\n')
-			end
+			if not lfs.attributes(name) then pass = colors(' [%{red}FAIL%{reset}]\n') end
 		end
 		io.write(pass)
 		lfs.chdir('..')
@@ -53,48 +56,52 @@ if arg[1] == 't' or arg[1] == 'test' then
 	-- Plan is to run replace modes tests on file contents instead.
 
 elseif arg[1] == 'i' or arg[1] == 'install' then
+	io.write('INSTALLING TO "' .. install .. '"...')
 	if isWindows then
 	else
-		local cmd = string.format('cp build/deedpoll %s/bin || sudo cp build/deedpoll %s/bin',
+		local cmd = string.format(
+			'cp build/deedpoll %s/bin 2>/dev/null || sudo cp build/deedpoll %s/bin 2>/dev/null',
 			install, install)
-		io.write('INSTALLING TO "' .. install .. '"... ')
-		run_command(cmd)
+		run_command(cmd, function() return lfs.attributes(install .. '/bin/deedpoll') end)
 	end
 
 elseif arg[1] == 'u' or arg[1] == 'uninstall' then
+	io.write('UNINSTALLING FROM "' .. install .. '"... ')
 	if isWindows then
 	else
-		local cmd = string.format('rm -f %s/bin/deedpoll || sudo rm -f %s/bin/deedpoll', install,
+		local cmd = string.format(
+			'rm -f %s/bin/deedpoll 2>/dev/null || sudo rm -f %s/bin/deedpoll 2>/dev/null', install,
 			install)
-		io.write('UNINSTALLING FROM "' .. install .. '"... ')
-		run_command(cmd)
+		run_command(cmd, function()
+			return lfs.attributes(install .. '/bin/deedpoll') and false or true
+		end)
 	end
 
 elseif arg[1] == 'c' or arg[1] == 'clean' then
 	io.write('CLEANING... ')
-	io.flush()
 	local clean = isWindows and 'rmdir /S /Q build & rmdir /S /Q test' or
 		'rm -r build test > /dev/null 2>&1'
-	os.execute(clean)
-	if lfs.attributes('build') or lfs.attributes('test') then
-		io.write(colors'[%{red}FAIL%{reset}%{reset}]\n')
-	else
-		io.write(colors'[%{green}DONE%{reset}%{reset}]\n')
-	end
-
+	run_command(clean, function()
+		if lfs.attributes('build') or lfs.attributes('test') then return false end
+		return true
+	end)
 elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	io.write('BUILDING... ')
 	lfs.mkdir('build')
+	local cmd = ''
 	if isWindows then
-
 	else
-		-- Presume Lua is installed and add shebang
-		os.execute("cp deedpoll.lua build/deedpoll")
-		os.execute(
-			"echo '#!/usr/bin/env lua' | cat - build/deedpoll > temp && mv temp build/deedpoll")
-		os.execute("chmod +x build/deedpoll")
+		cmd = string.format('%s && %s && %s', 'cp deedpoll.lua build/deedpoll',
+			'echo \'#!/usr/bin/env lua\' | cat - build/deedpoll > temp && mv temp build/deedpoll',
+			'chmod +x build/deedpoll')
 	end
-	io.write(colors'[%{green}DONE%{reset}]\n')
+	run_command(cmd, function()
+		if isWindows then
+			return false
+		else
+			return lfs.attributes('build/deedpoll')
+		end
+	end)
 else
-	print('NO OPTION "' .. arg[1] .. '"')
+	print('NO OPTION FOR "' .. arg[1] .. '"')
 end
