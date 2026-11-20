@@ -1,19 +1,10 @@
---- Test suites for Deedpoll
-
---- Deedpoll's tests are tables with these entries
--- @field name Name of the test
--- @field cmd The command to run
--- @field input Array of starting names for files
--- @field expected Array of expected names for files after rename
--- @table deedpoll_test
-
---- Array of tests
+-- Copyright 2026 Jamie Drinkell
+--- Suite of tests for Deedpoll
 -- @module tests
 local M = {}
 
 --[[ TEST TEMPLATE
-
-M[new()] = {
+test{
 	name = '',
 	cmd = 'deedpoll ',
 	input = {
@@ -23,26 +14,40 @@ M[new()] = {
 		''
 	}
 }
-
 ]]
 
---- Create and return a new test number entry.
-local function new_test_number()
+-------------------- UTILITIES --------------------
+
+--- Test number generating closure.
+local function test_number_generator()
 	local count = 0
-	return function ()
+	return function()
 		count = count + 1
 		return count
 	end
 end
 
---- Create counter
-local new = new_test_number()
+--- Create test counter.
+local test_counter = test_number_generator()
+
+--- Add a new test.
+-- Deedpoll's tests are defined with tables
+-- @param test a test suite table
+-- @param test.name Name of the test
+-- @param test.cmd The command to run
+-- @param test.input Array of starting names for files
+-- @param test.expected Array of expected names for files after rename
+local function test(test)
+	M[test_counter()] = test
+end
+
+-------------------- TESTS --------------------
 
 -- LuaFormatter off
 
 -- CASE MODE TESTS
 
-M[new()] = {
+test{
 	name = 'Title case.',
 	cmd = 'deedpoll case title',
 	input = {
@@ -53,7 +58,7 @@ M[new()] = {
 	}
 }
 
-M[new()] = {
+test{
 	name = 'Lower case on full filenames.',
 	cmd = 'deedpoll case lower --name=full',
 	input = {
@@ -64,7 +69,7 @@ M[new()] = {
 	}
 }
 
-M[new()] = {
+test{
 	name = 'Upper case on full filenames.',
 	cmd = 'deedpoll case upper --name=full',
 	input = {
@@ -75,7 +80,7 @@ M[new()] = {
 	}
 }
 
-M[new()] = {
+test{
 	name = 'Remove accents.',
 	cmd = 'deedpoll case accent',
 	input = {
@@ -86,7 +91,7 @@ M[new()] = {
 	}
 }
 
-M[new()] = {
+test{
 	name = 'First character case.',
 	cmd = 'deedpoll case first',
 	input = {
