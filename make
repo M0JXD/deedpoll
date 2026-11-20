@@ -3,8 +3,8 @@
 --- Make & Test system for Deedpoll
 
 local lfs = require('lfs')
-local colors = require('lib.ansicolors')
 local tests = require('tests')
+local colors = require('lib.ansicolors')
 
 local isWindows = type(package) == 'table' and type(package.config) == 'string' and
 	package.config:sub(1, 1) == '\\'
