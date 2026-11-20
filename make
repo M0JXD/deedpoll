@@ -24,7 +24,7 @@ local function run_command(cmd, check)
 end
 
 if arg[1] == 't' or arg[1] == 'test' then
-	local null_redirect = isWindows and 'nul' or '/dev/null'
+	local null_redirect = isWindows and '> nul' or '> /dev/null'
 	local delete_dir = isWindows and 'rmdir /s /q ' or 'rm -rf '
 
 	print(colors'%{bright cyan}===== DEEDPOLL TEST SUITE =====')
@@ -40,8 +40,14 @@ if arg[1] == 't' or arg[1] == 'test' then
 		for _, name in ipairs(test.input) do io.open(name, "w"):close() end
 
 		-- Run rename operation
-		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. ' --yes > ' ..
-			null_redirect)
+		test.cmd = test.cmd .. ' --yes'
+		if test.files then
+			for _, file in ipairs(test.files) do
+				test.cmd = string.format('%s "%s"', test.cmd, file)
+			end
+		end
+
+		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 
 		-- Check expected filename(s) exist
 		local pass = colors(' [%{green}PASS%{reset}]\n')
