@@ -389,7 +389,7 @@ end
 local function rename(files, action, params, opt)
 
 	-- Fix replace string if patterns is not enabled
-	if not opt.pattern then
+	if not opt.pattern and params.find then
 		-- Prefix magic characters
 		params.find = params.find:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
 		-- Convert wildcards to greedy match pattern
@@ -400,7 +400,7 @@ local function rename(files, action, params, opt)
 	-- Source - https://stackoverflow.com/a/11402486
 	-- Posted by Bart Kiers, modified by community. See post 'Timeline' for change history
 	-- Retrieved 2026-11-19, License - CC BY-SA 3.0
-	function case_insensitive_pattern(pattern)
+	local function case_insensitive_pattern(pattern)
 		-- find an optional '%' (group 1) followed by any character (group 2)
 		local p = pattern:gsub("(%%?)(.)", function(percent, letter)
 			if percent ~= "" or not letter:match("%a") then
@@ -415,7 +415,7 @@ local function rename(files, action, params, opt)
 	end
 
 	-- Make patterns case insenstive if need be.
-	if not opt.sensitive then params.find = case_insensitive_pattern(params.find) end
+	if not opt.sensitive and params.find then params.find = case_insensitive_pattern(params.find) end
 
 	-- Set up enumerator.
 	opt._enumerator = enumerate(opt.start, opt.increment)
