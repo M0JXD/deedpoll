@@ -1,6 +1,8 @@
 -- Copyright 2026 Jamie Drinkell
 
----------- ANSICOLOR LIBRARY ----------
+--- ANSICOLOR Library
+-- @section ansicolor
+
 local colors = (function()
 	-- ansicolors.lua v1.0.4 (2026-08)
 
@@ -33,7 +35,7 @@ local colors = (function()
 		return isWindows and (os.getenv("ANSICON") or os.getenv('WT_SESSION')) or true
 	end
 
-	--- Color Mode Keys table.
+	--- Color Mode Keys Map.
 	local keys = {
 		-- reset
 		reset = 0, -- misc
@@ -90,7 +92,8 @@ local colors = (function()
 
 end)()
 
----------- DEEDPOLL ----------
+--- Deedpoll
+-- @section deedpoll
 
 local lfs = require('lfs')
 
@@ -255,7 +258,7 @@ local function enumerate(start, increment)
 end
 
 --- Find and replace %n patterns
-local function modulo_n(str, opt)
+local function enumerate_pattern(str, opt)
 	if str:find('%%0*n') then
 		local enumerate_val = opt._enumerator()
 		return str:gsub('%%0*n', function(mat)
@@ -347,7 +350,7 @@ local renamers = {
 	end,
 	-- Insert Renamer
 	i = function(name, params, opt)
-		local text = modulo_n(params.text, opt)
+		local text = enumerate_pattern(params.text, opt)
 		if opt.pos_end then
 			return name:sub(1, name:len() - opt.pos) .. params.text ..
 				name:sub(name:len() - opt.pos + 1)
@@ -359,7 +362,7 @@ local renamers = {
 	-- Replace Renamer
 	r = function(name, params, opt)
 		local text = params.text
-		if name:find(params.find) then text = modulo_n(params.text, opt) end
+		if name:find(params.find) then text = enumerate_pattern(params.text, opt) end
 		return name:gsub(params.find, text, 1)
 	end,
 	-- Search Renamer
