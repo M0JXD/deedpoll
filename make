@@ -12,6 +12,8 @@ local isWindows = type(package) == 'table' and type(package.config) == 'string' 
 local install = arg[2] and arg[2] or '/usr/local'
 
 if arg[1] == 't' or arg[1] == 'test' then
+	-- TODD: Search mode is inherently different as it searches within files
+
 	local null_redirect = isWindows and 'nul' or '/dev/null'
 	local delete_dir = isWindows and 'rmdir /s /q ' or 'rm -rf '
 	local function cleanup()
@@ -21,7 +23,6 @@ if arg[1] == 't' or arg[1] == 'test' then
 
 	print(colors'%{bright cyan}===== DEEDPOLL TEST SUITE =====')
 	for _, test in ipairs(tests) do
-
 		io.write(colors'%{yellow}TEST: ' .. test.name)
 
 		-- Create temp test directory for this run
@@ -29,9 +30,7 @@ if arg[1] == 't' or arg[1] == 'test' then
 		lfs.chdir('test')
 
 		-- Create test file(s)
-		for _, name in ipairs(test.input) do
-			io.open(name, "w"):close()
-		end
+		for _, name in ipairs(test.input) do io.open(name, "w"):close() end
 
 		-- Run rename operation
 		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. ' --yes > ' ..
