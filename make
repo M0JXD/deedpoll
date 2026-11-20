@@ -12,16 +12,14 @@ local isWindows = type(package) == 'table' and type(package.config) == 'string' 
 local install = arg[2] and arg[2] or '/usr/local'
 
 local function run_command(cmd)
-		if os.execute(cmd) ~= '0' then
-			io.write(colors'[%{red}FAIL%{reset}%{reset}]\n')
-		else
-			io.write(colors'[%{green}DONE%{reset}%{reset}]\n')
-		end
+	if os.execute(cmd) ~= '0' then
+		io.write(colors'[%{red}FAIL%{reset}%{reset}]\n')
+	else
+		io.write(colors'[%{green}DONE%{reset}%{reset}]\n')
+	end
 end
 
 if arg[1] == 't' or arg[1] == 'test' then
-	-- TODD: Search mode is inherently different as it searches within files
-
 	local null_redirect = isWindows and 'nul' or '/dev/null'
 	local delete_dir = isWindows and 'rmdir /s /q ' or 'rm -rf '
 
@@ -41,16 +39,18 @@ if arg[1] == 't' or arg[1] == 'test' then
 			null_redirect)
 
 		-- Check expected filename(s) exist
+		local pass = colors(' [%{green}PASS%{reset}]\n')
 		for _, name in ipairs(test.expected) do
 			if not lfs.attributes(name) then
-				io.write(colors' [%{red}FAIL%{reset}]\n')
-			else
-				io.write(colors' [%{green}PASS%{reset}]\n')
+				pass = colors(' [%{red}FAIL%{reset}]\n')
 			end
 		end
+		io.write(pass)
 		lfs.chdir('..')
 		os.execute(delete_dir .. 'test')
 	end
+	-- TODD: Search mode is inherently different as it searches within files
+	-- Plan is to run replace modes tests on file contents instead.
 
 elseif arg[1] == 'i' or arg[1] == 'install' then
 	if isWindows then
@@ -73,7 +73,8 @@ elseif arg[1] == 'u' or arg[1] == 'uninstall' then
 elseif arg[1] == 'c' or arg[1] == 'clean' then
 	io.write('CLEANING... ')
 	io.flush()
-	local clean = isWindows and 'rmdir /S /Q build & rmdir /S /Q test' or 'rm -r build test > /dev/null 2>&1'
+	local clean = isWindows and 'rmdir /S /Q build & rmdir /S /Q test' or
+		'rm -r build test > /dev/null 2>&1'
 	os.execute(clean)
 	if lfs.attributes('build') or lfs.attributes('test') then
 		io.write(colors'[%{red}FAIL%{reset}%{reset}]\n')
