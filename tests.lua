@@ -104,6 +104,57 @@ test{
 	}
 }
 
+test{
+	name = 'Delete letters where start is specified from the end.',
+	cmd = 'deedpoll delete --pos=5e --to=1 --name=full',
+	input= {
+		'test_dir/',
+		'test_file_1.png',
+		'test_file_2',
+		'test_file_3'
+	},
+	expected = {
+		'_dir/',
+		'.png',
+		'le_2',
+		'le_3'
+	}
+}
+
+test{
+	name = 'Delete letters where to is specified from the end.',
+	cmd = 'deedpoll delete --pos=1 --to=5e --name=full',
+	input= {
+		'test_dir/',
+		'test_file_1.png',
+		'test_file_2',
+		'test_file_3'
+	},
+	expected = {
+		'_dir/',
+		'.png',
+		'le_2',
+		'le_3'
+	}
+}
+
+test{
+	name = 'Delete letters where both positions are specified from the end.',
+	cmd = 'deedpoll delete --pos=3e --to=5e --name=full',
+	input= {
+		'test_dir/',
+		'test_file_1.png',
+		'test_file_2',
+		'test_file_3'
+	},
+	expected = {
+		'testir/',
+		'test_file_1ng',
+		'test_fi_2',
+		'test_fi_3'
+	}
+}
+
 -- INSERT MODE TESTS
 
 test{
@@ -270,9 +321,11 @@ test{
 	name = 'Use full listing with hidden files.',
 	cmd = 'deedpoll upper --full',
 	input = {
+		'testfile',
 		'.testname'
 	},
 	expected = {
+		'TESTFILE',
 		'.TESTNAME'
 	}
 }
