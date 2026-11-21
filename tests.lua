@@ -18,12 +18,13 @@ local test_counter = test_number_generator()
 
 --- Add a new test.
 -- Deedpoll's tests are defined with tables.
+-- The test implemetation can only create one directory/file at a time, you will need to list nested objects.
 -- @param test Table of test details.
 -- @param test.name Name of the test.
 -- @param test.cmd The command to run.
--- @param test.files[OPT] Filenames that should be appended to the command.
--- @param test.input Array of starting names for files.
--- @param test.expected Array of expected names for files after rename.
+-- @param test.files[OPT] Filenames or directories that should be appended to the command. Append '/' to signify a directory.
+-- @param test.input Array of starting names for files or directories. Append '/' to signify a directory.
+-- @param test.expected Array of expected names for files or directories after rename.  Append '/' to signify a directory.
 local function test(test)
 	M[test_counter()] = test
 end
@@ -33,7 +34,7 @@ end
 
 -- LuaFormatter off
 
--- CASE MODE TESTS
+-- CASE CHANGE TESTS
 
 test{
 	name = 'Remove accents.',
@@ -89,8 +90,6 @@ test{
 		'TEST.TXT'
 	}
 }
-
-
 
 -- DELETE MODE TESTS
 
@@ -190,6 +189,60 @@ test{
 -- REPLACE MODE TESTS
 
 test{
+	name = 'Replace a basic string.',
+	cmd = 'deedpoll replace "ABC" "123"',
+	input = {
+		'IGNORE ABC IGNORE.txt'
+	},
+	expected = {
+		'IGNORE 123 IGNORE.txt'
+	}
+}
+
+test{
+	name = 'Replace with wildcard.',
+	cmd = 'deedpoll replace "*ABC" "123"',
+	input = {
+		'REPLACE ABC IGNORE.txt'
+	},
+	expected = {
+		'123 IGNORE.txt'
+	}
+}
+
+test{
+	name = 'Replace with case sensitivity.',
+	cmd = 'deedpoll replace "*ABC" "123" --case',
+	input = {
+		'REPLACE ABC IGNORE.txt',
+		'REPLACE abc IGNORE.txt'
+	},
+	expected = {
+		'123 IGNORE.txt',
+		'REPLACE abc IGNORE.txt'
+	}
+}
+
+test{
+	name = 'Replace with enumeration.',
+	cmd = 'deedpoll replace "ignore*ignore" "IGNORE %0n IGNORE" --start=0 --inc=5',
+	input = {
+		'IGNORE A IGNORE.txt',
+		'IGNORE B IGNORE.txt',
+		'IGNORE C IGNORE.txt',
+		'IGNORE D IGNORE.txt',
+		'IGNORE E IGNORE.txt'
+	},
+	expected = {
+		'IGNORE 00 IGNORE.txt',
+		'IGNORE 05 IGNORE.txt',
+		'IGNORE 10 IGNORE.txt',
+		'IGNORE 15 IGNORE.txt',
+		'IGNORE 20 IGNORE.txt'
+	}
+}
+
+test{
 	name = 'Replace using Lua pattern.',
 	cmd = 'deedpoll replace "%a%d%s%u%l" "ABC" --exp',
 	input = {
@@ -214,8 +267,8 @@ test{
 }
 
 test{
-	name = 'Hidden files.',
-	cmd = 'deedpoll upper --hidden',
+	name = 'Use full listing with hidden files.',
+	cmd = 'deedpoll upper --full',
 	input = {
 		'.testname'
 	},
@@ -225,7 +278,7 @@ test{
 }
 
 test{
-	name = 'Specified hidden files without --hidden.',
+	name = 'Act on listed hidden files without `--full`.',
 	cmd = 'deedpoll upper',
 	files = {
 		'.testname'
@@ -262,6 +315,59 @@ test{
 	},
 	expected = {
 		'lowercase.txt'
+	}
+}
+
+test{
+	name = 'Recurse mode.',
+	cmd = 'deedpoll upper --recurse',
+	input = {
+		'file.txt',
+		'file2.txt',
+		'top1/',
+		'top1/level1/',
+		'top1/level1/level2/',
+		'top1/level1/level2/file.txt',
+		'top1/level1/level2/file2.txt',
+		'top2/',
+		'top2/file.txt',
+		'top2/file2.txt'
+	},
+	expected = {
+		'FILE.txt',
+		'FILE2.txt',
+		'top1/level1/level2/FILE.txt',
+		'top1/level1/level2/FILE2.txt',
+		'top2/FILE.txt',
+		'top2/FILE2.txt'
+	}
+}
+
+test{
+	name = 'Recurse mode with provided path.',
+	cmd = 'deedpoll upper --recurse',
+	files = {
+		'top1/'
+	},
+	input = {
+		'file.txt',
+		'file2.txt',
+		'top1/',
+		'top1/level1/',
+		'top1/level1/level2/',
+		'top1/level1/level2/file.txt',
+		'top1/level1/level2/file2.txt',
+		'top2/',
+		'top2/file.txt',
+		'top2/file2.txt'
+	},
+	expected = {
+		'file.txt',
+		'file2.txt',
+		'top1/level1/level2/FILE.txt',
+		'top1/level1/level2/FILE2.txt',
+		'top2/file.txt',
+		'top2/file2.txt'
 	}
 }
 
