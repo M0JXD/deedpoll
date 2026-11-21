@@ -17,13 +17,13 @@ end
 local test_counter = test_number_generator()
 
 --- Add a new test.
--- Deedpoll's tests are defined with tables
--- @param test Table of test details
--- @param test.name Name of the test
+-- Deedpoll's tests are defined with tables.
+-- @param test Table of test details.
+-- @param test.name Name of the test.
 -- @param test.cmd The command to run.
--- @param test.files[OPT] Filenames that should be appended to the command
--- @param test.input Array of starting names for files
--- @param test.expected Array of expected names for files after rename
+-- @param test.files[OPT] Filenames that should be appended to the command.
+-- @param test.input Array of starting names for files.
+-- @param test.expected Array of expected names for files after rename.
 local function test(test)
 	M[test_counter()] = test
 end
@@ -34,39 +34,6 @@ end
 -- LuaFormatter off
 
 -- CASE MODE TESTS
-
-test{
-	name = 'Title case.',
-	cmd = 'deedpoll case title',
-	input = {
-		'title mode test.txt'
-	},
-	expected = {
-		'Title Mode Test.txt'
-	}
-}
-
-test{
-	name = 'Lower case on full filenames.',
-	cmd = 'deedpoll case lower --name=full',
-	input = {
-		'TEST.TXT'
-	},
-	expected = {
-		'test.txt'
-	}
-}
-
-test{
-	name = 'Upper case on full filenames.',
-	cmd = 'deedpoll case upper --name=full',
-	input = {
-		'test.txt'
-	},
-	expected = {
-		'TEST.TXT'
-	}
-}
 
 test{
 	name = 'Remove accents.',
@@ -89,6 +56,41 @@ test{
 		'The first character test.txt'
 	}
 }
+
+test{
+	name = 'Lower case on full filenames.',
+	cmd = 'deedpoll case lower --name=full',
+	input = {
+		'TEST.TXT'
+	},
+	expected = {
+		'test.txt'
+	}
+}
+
+test{
+	name = 'Title case.',
+	cmd = 'deedpoll case title',
+	input = {
+		'title mode test.txt'
+	},
+	expected = {
+		'Title Mode Test.txt'
+	}
+}
+
+test{
+	name = 'Upper case on full filenames.',
+	cmd = 'deedpoll case upper --name=full',
+	input = {
+		'test.txt'
+	},
+	expected = {
+		'TEST.TXT'
+	}
+}
+
+
 
 -- DELETE MODE TESTS
 
@@ -128,7 +130,29 @@ test{
 }
 
 test{
-	name = 'Enumerate values',
+	name = 'Insert with overwrite.',
+	cmd = 'deedpoll insert "TEXT" --overwrite',
+	input = {
+		'testing_file.txt'
+	},
+	expected = {
+		'TEXTing_file.txt'
+	}
+}
+
+test{
+	name = 'Insert with overwrite from end.',
+	cmd = 'deedpoll insert "TEXT" --overwrite --pos=4e',
+	input = {
+		'testing_file.txt'
+	},
+	expected = {
+		'testing_TEXT.txt'
+	}
+}
+
+test{
+	name = 'Insert enumerated values.',
 	cmd = 'deedpoll insert "%n - "',
 	input = {
 		'a.txt',
@@ -142,11 +166,77 @@ test{
 	}
 }
 
+test{
+	name = 'Insert reverse enumerated with leading zeros and large increment.',
+	cmd = 'deedpoll insert "%00n - " --start=100 --increment=-20',
+	input = {
+		'a.txt',
+		'b.txt',
+		'c.txt',
+		'd.txt',
+		'e.txt',
+		'f.txt'
+	},
+	expected = {
+		'100 - a.txt',
+		'080 - b.txt',
+		'060 - c.txt',
+		'040 - d.txt',
+		'020 - e.txt',
+		'000 - f.txt'
+	}
+}
+
 -- REPLACE MODE TESTS
 
--- BASE/EXT/FULL TESTS
+test{
+	name = 'Replace using Lua pattern.',
+	cmd = 'deedpoll replace "%a%d%s%u%l" "ABC" --exp',
+	input = {
+		'a1 Ul'
+	},
+	expected = {
+		'ABC'
+	}
+}
 
 -- MISC
+
+test{
+	name = 'Extension only.',
+	cmd = 'deedpoll case lower --name=ext',
+	input = {
+		'TEST.TXT'
+	},
+	expected = {
+		'TEST.txt'
+	}
+}
+
+test{
+	name = 'Hidden files.',
+	cmd = 'deedpoll case upper --hidden',
+	input = {
+		'.testname'
+	},
+	expected = {
+		'.TESTNAME'
+	}
+}
+
+test{
+	name = 'Specified hidden files without --hidden.',
+	cmd = 'deedpoll case upper',
+	files = {
+		'.testname'
+	},
+	input = {
+		'.testname'
+	},
+	expected = {
+		'.TESTNAME'
+	}
+}
 
 test{
 	name = 'Disallow mode.',
@@ -161,17 +251,6 @@ test{
 	expected = {
 		'MAKE ME UPPER.txt',
 		'not me.txt'
-	}
-}
-
-test{
-	name = 'Lua pattern replace.',
-	cmd = 'deedpoll replace "%d" "ABC" --exp',
-	input = {
-		'123'
-	},
-	expected = {
-		'ABC'
 	}
 }
 
