@@ -382,7 +382,7 @@ local function rename_action(name, action, params, opt)
 end
 
 --- Run rename action of files with given options and parameters.
-local function rename(files, mode, params, opt)
+local function rename(mode, params, opt, files)
 	local action = renamers[mode]
 	-- Source - https://stackoverflow.com/a/11402486
 	-- Posted by Bart Kiers, modified by community. See post 'Timeline' for change history
@@ -641,4 +641,4 @@ end
 
 local mode, params, opt, files = parse_cli()
 pr_options(mode, params, opt)
-rename(files, mode, params, opt)
+rename(mode, params, opt, files)
