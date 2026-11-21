@@ -8,26 +8,30 @@ Deedpoll is made with Lua and should run in any Lua 5.1 or later interpreter, in
 ## Usage
 
 In most terminals, Deedpoll's output is colourful:
+
 - Directories are shown in bold blue, akin to `ls`.
 - In the case where a rename does not cause a change, Deedpoll uses a cyan arrow instead of a yellow one.
 - Parameters/option overviews and informational text use colours to make them easier to read.
+
+**insert** and **replace** mode require parameters.
+Parameters are expected as the immediate arguments after specifying the mode, and are not flagged like options.
+
+Options are parsed as full words. E.g. `-i 2` will not be parsed, you must use `-i=2`.
 
 ```
 Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
 
 [MODE]
-  case    (c)  Changes character cases.
+  accent  (a)  Removes accents in the file name.
   delete  (d)  Delete characters between specified positions.
+  first   (f)  Makes first character uppercase.
   insert  (i)  Insert text into filename.
+  lower   (l)  Changes names to lower case.
   replace (r)  Replace text in filename.
+  title   (t)  Changes names to title case.
+  upper   (u)  Changes names to upper case
 
 [PARAMETERS]
-  ACTION  Case change to apply in case mode.
-    accent (a)  Removes accents in the file name.
-    first  (f)  Makes first character uppercase.
-    lower  (l)  Changes names to lower case.
-    title  (t)  Changes names to title case.
-    upper  (u)  Changes names to upper case
   FIND  Find text for replace mode. Wildcards ? and * are supported.
   TEXT  Text for insert/replace mode. Use %n, %0n, %00n etc. to enumerate.
 
@@ -42,7 +46,7 @@ Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
   -n=/--name=     [(b)ase/(e)xt/(f)ull] aspect of filename to change.
   -o/--overwrite  Enable overwrite for insert mode.
   -p=/--pos=      Start position for insert/delete.
-  -r/--recurse    Recurse directories for all files.
+  -r/--recurse    Recurse search for files. Directories are not be renamed.
   -s=/--start=    Start number for incremented %n patterns.
   -t=/--to=       Position to delete to in delete mode.
   -v/--version    Show version information.
@@ -56,7 +60,7 @@ NOTES
 
 EXAMPLES
   # Change whole filename including the extension to uppercase
-  deedpoll case upper -n=full
+  deedpoll upper -n=full
   # Delete characters from 2nd to 5th letter
   deedpoll delete --pos=2 --to=5
   # Insert "text {n}" at start, incrementing in 2's, no confirmation
@@ -65,14 +69,17 @@ EXAMPLES
   deedpoll replace "old" "new" -d ignore.txt
 ```
 
+Deedpoll does not heaviliy sanitise it's CLI arguments.
+For example, `deedpoll any` will resolve to the remove accent mode, as the argument begins with *a*.
+
 ## Install
 
 Most systems should provide installable packages for [Lua][1] and [LuaFileSystem][2].
 Releases offers the ready to run script with a shebang added that can be used directly, and placed with the user's other binaries.
 All in one binaries for Windows (supporting XP and newer) are made with [luainstaller][3].
 
-[1]: 
-[2]: 
+[1]: https://www.lua.org/
+[2]: https://lunarmodules.github.io/luafilesystem/
 [3]: https://github.com/Water-Run/luainstaller
 
 Alternatively, use Deedpoll's custom Lua build system.
@@ -120,7 +127,7 @@ Tests are of the form:
 -- Template for Deedpoll's tests.
 test{
 	name = 'Descriptive name for the test.',
-	cmd = 'deedpoll mode --option',
+	cmd = 'deedpoll [MODE] [OPTIONS]',
     files = {
         'filenames_to_pass_at_cli (optional).txt'
     },
