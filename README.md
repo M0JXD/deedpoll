@@ -1,13 +1,16 @@
 # Deedpoll CLI File Renaming Utility
 
-Deedpoll is a simple, easy and useful bulk file renaming utility.
+Deedpoll is a simple, easy and useful CLI bulk file renaming utility.
 It exists to bring the simplistic but powerful renaming model of GUI utilities like Linux Mint's Bulky and Thunar Bulk Rename to other systems in a maximally portable way.
 
 Deedpoll is made with Lua and should run in any Lua 5.1 or later interpreter, including LuaJIT. It requires LuaFileSystem.
 
-## Guide
+## Usage
 
-In most terminals, Deedpoll's output is colourful, offering easy semantic insight into rename operations.
+In most terminals, Deedpoll's output is colourful:
+- Directories are shown in bold blue, akin to `ls`
+- In the case where a rename does not cause a change, Deedpoll uses a cyan arrow instead of a yellow one.
+- Parameters/option overviews and informational text use colours to make them easier to read.
 
 ```
 Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
@@ -15,19 +18,18 @@ Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
 [MODE]
   case    (c)  Changes character cases.
   delete  (d)  Delete characters between specified positions.
-  search  (s)  Search and replace within file contents.
   insert  (i)  Insert text into filename.
   replace (r)  Replace text in filename.
 
 [PARAMETERS]
   ACTION  Case change to apply in case mode.
-    title   (t)  Changes names to title case.
-    lower   (l)  Changes names to lower case.
-    upper   (u)  Changes names to upper case
-    accents (a)  Removes accents in the file name.
-    first   (f)  Makes first character uppercase.
-  FIND  Find text for search/replace. Wildcards ? and * are supported.
-  TEXT  Text for search/insert/replace. Use %n, %0n, %00n etc. to enumerate.
+    accent (a)  Removes accents in the file name.
+    first  (f)  Makes first character uppercase.
+    lower  (l)  Changes names to lower case.
+    title  (t)  Changes names to title case.
+    upper  (u)  Changes names to upper case
+  FIND  Find text for replace mode. Wildcards ? and * are supported.
+  TEXT  Text for insert/replace mode. Use %n, %0n, %00n etc. to enumerate.
 
 [OPTIONS]
   -c/--case       Enable case sensitivity in replace mode.
@@ -53,17 +55,31 @@ NOTES
   For pos/to, pre/postfix the letter 'e' to the value to specify from the end.
 
 EXAMPLES
-  # Delete characters from 2nd to 5th letter
-  deedpoll delete --pos=2 --to=5
   # Change whole filename including the extension to uppercase
   deedpoll case upper -n=full
+  # Delete characters from 2nd to 5th letter
+  deedpoll delete --pos=2 --to=5
   # Insert "text {n}" at start, incrementing in 2's, no confirmation
   deedpoll insert "text %n" -i=2 -y
   # Replace "old" with "new" in current directory except for "ignore.txt"
   deedpoll replace "old" "new" -d ignore.txt
 ```
 
-### Regular Expression Support
+## Install
+
+Most systems should provide installable packages for [Lua][1] and [LuaFileSystem][2].
+Releases offers the ready to run script with a shebang added that can be used directly, and placed with the user's other binaries.
+All in one binaries for Windows (supporting XP and newer) are made with [luainstaller][3].
+
+[1]: 
+[2]: 
+[3]: https://github.com/Water-Run/luainstaller
+
+Alternatively, use Deedpoll's custom Lua build system.
+Clone the source and use `./make && ./make install` to install to */usr/local*.
+The second argument can be set with a different install prefix, e.g. `./make install ~/.local`.
+
+## Regular Expression Support
 
 At this time, Deedpoll does not support regular expression find and replace.
 Other tools like [f2][1], [brename][2] and [rnr][3] offer this in a much better capacity.
@@ -75,21 +91,44 @@ Deedpoll exists to do simple renaming tasks with less mental effort than it woul
 
 On the converse, Deedpoll enables the user to use Lua patterns, which are simpler albeit more limited (but still very capable).
 
-## Install
+## Development
 
-Most systems should provide installable packages for Lua and LuaFileSystem.
-Releases offers the ready to run script with a shebang added that can be used directly and placed with the user's other binaries.
+Deedpoll includes it's own "build" system and test suite created in Lua, contained across the *make* and *tests.lua* files.
 
-Alternatively, clone the source and use `./make && ./make install` to install to */usr/local*.
-The second argument can be set with a different install prefix, e.g. `./make install ~/.local`.
+Deedpoll use a forked version of [ansicolors][1] to provide colours, which is bundled into the main source.
+*ansicolors* is also used for the *make* system, so is also stored separately under *lib/*.
+Deedpoll is written in such a way that updates to *ansicolors* can be easily pasted into the source code.
 
-### Windows
+Some of the code within Deedpoll originates from Stack Overflow, those snippets are *CC BY-SA* licensed, with citations within the source.
+Other than that, Deedpoll's code was generated by a human.
 
-Binaries for Windows (supporting XP and newer) are made with [luainstaller](https://github.com/Water-Run/luainstaller).
+The *make* system offers the following options:
 
-## TODO
+- build (default) - "Build" Deedpoll for the current platform into *build/* (inserting a shebang to the script)
+- install - Install to system, requires `build` to have run.
+- uninstall - Uninstall from system. The make system does not remember custom prefixes, so you will need to specify again.
+- test - Run the test suite.
+- clean - Delete build and any lingering test files.
 
-- UNIT TESTS!! Verifying behaviour will be tedious with high likelihood of regressions until this is done
-- Make feature complete
-- Add translations method
-- Build Windows version
+### Tests
+
+New tests are added to *tests.lua* with the `test{}` function.
+They are simply Lua tables detailing the test's parameters and expected outputs.
+Tests are of the form:
+
+```lua
+-- Template for Deedpoll's tests.
+test{
+	name = 'Descriptive name for the test.',
+	cmd = 'deedpoll mode --option',
+    files = {
+        'filenames_to_pass_at_cli (optional).txt'
+    },
+	input = {
+		'starting_filename.txt'
+	},
+	expected = {
+		'expected_file_name.txt'
+	}
+}
+```
