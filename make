@@ -11,9 +11,9 @@ local isWindows = type(package) == 'table' and type(package.config) == 'string' 
 
 local install = arg[2] and arg[2] or '/usr/local'
 
---- Run a command with a custom success checker
+--- Run a command with a custom success checker.
 -- @param cmd Command to run.
--- @param check Check function to run after command, return truthy on pass
+-- @param check Check function to run after command, return truthy on pass.
 local function run_command(cmd, check)
 	os.execute(cmd)
 	if check() then
@@ -22,6 +22,9 @@ local function run_command(cmd, check)
 		io.write(colors' [%{red}FAIL%{reset}%{reset}]\n')
 	end
 end
+
+--- Main Script Starts
+-- @section main
 
 if arg[1] == 't' or arg[1] == 'test' then
 	local null_redirect = isWindows and '> nul' or '> /dev/null'
