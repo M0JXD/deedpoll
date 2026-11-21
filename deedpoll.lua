@@ -1,6 +1,6 @@
 -- Copyright 2026 Jamie Drinkell
 
---- ANSICOLOR Library
+--- Terminal Color Library
 -- @section ansicolor
 
 local colors = (function()
@@ -51,9 +51,7 @@ local colors = (function()
 
 	--- Inserts the escape character to the terminal number.
 	-- @param terminal number to insert.
-	local function escapeNumber(number)
-		return escapeString:format(number)
-	end
+	local function escapeNumber(number) return escapeString:format(number) end
 
 	local supported = colorSupport()
 
@@ -95,7 +93,7 @@ end)()
 --- Deedpoll
 -- @section deedpoll
 
-local lfs = require('lfs')
+require('lfs')
 
 --- Error printing utility.
 -- Automatically exits with error message when called.
@@ -121,18 +119,18 @@ local function pr_help()
 	print(mode)
 	print(colors '  %{cyan}case    (c)%{reset}  Changes character cases.')
 	print(colors '  %{cyan}delete  (d)%{reset}  Delete characters between specified positions.')
-	print(colors '  %{cyan}search  (s)%{reset}  Search and replace within file contents.')
+	-- print(colors '  %{cyan}search  (s)%{reset}  Search and replace within file contents.')
 	print(colors '  %{cyan}insert  (i)%{reset}  Insert text into filename.')
 	print(colors '  %{cyan}replace (r)%{reset}  Replace text in filename.\n')
 	print(parameters)
 	print(colors '  %{bright}ACTION%{reset}  Case change to apply in case mode.')
-	print(colors '    %{cyan}title   (t)%{reset}  Changes names to title case.')
-	print(colors '    %{cyan}lower   (l)%{reset}  Changes names to lower case.')
-	print(colors '    %{cyan}upper   (u)%{reset}  Changes names to upper case')
-	print(colors '    %{cyan}accents (a)%{reset}  Removes accents in the file name.')
-	print(colors '    %{cyan}first   (f)%{reset}  Makes first character uppercase.')
-	print(colors '  %{bright}FIND%{reset}  Find text for search/replace. Wildcards ? and * are supported.')
-	print(colors '  %{bright}TEXT%{reset}  Text for search/insert/replace. Use %n, %0n, %00n etc. to enumerate.\n')
+	print(colors '    %{cyan}accent (a)%{reset}  Removes accents in the file name.')
+	print(colors '    %{cyan}first  (f)%{reset}  Makes first character uppercase.')
+	print(colors '    %{cyan}lower  (l)%{reset}  Changes names to lower case.')
+	print(colors '    %{cyan}title  (t)%{reset}  Changes names to title case.')
+	print(colors '    %{cyan}upper  (u)%{reset}  Changes names to upper case')
+	print(colors '  %{bright}FIND%{reset}  Find text for replace mode. Wildcards ? and * are supported.')
+	print(colors '  %{bright}TEXT%{reset}  Text for insert/replace mode. Use %n, %0n, %00n etc. to enumerate.\n')
 	print(options)
 	print(colors '  %{cyan}-c/--case%{reset}       Enable case sensitivity in replace mode.')
 	print(colors '  %{cyan}-d/--disallow%{reset}   Listed files are not processed from current directory.')
@@ -155,10 +153,10 @@ local function pr_help()
 	print(colors '  Unless "mock" or "yes" are enabled, Deedpoll requires confirmation.')
 	print(colors '  For pos/to, pre/postfix the letter \'e\' to the value to specify from the end.\n')
 	print(colors '%{bright}EXAMPLES%{reset}')
-	print(colors '  %{dim}# Delete characters from 2nd to 5th letter')
-	print(colors '  deedpoll delete --pos=2 --to=5')
 	print(colors '  %{dim}# Change whole filename including the extension to uppercase')
 	print(colors '  deedpoll case upper -n=full')
+	print(colors '  %{dim}# Delete characters from 2nd to 5th letter')
+	print(colors '  deedpoll delete --pos=2 --to=5')
 	print(colors '  %{dim}# Insert "text {n}" at start, incrementing in 2\'s, no confirmation')
 	print(colors '  deedpoll insert "text %n" -i=2 -y')
 	print(colors '  %{dim}# Replace "old" with "new" in current directory except for "ignore.txt"')
@@ -204,7 +202,7 @@ local function pr_options(mode, params, opt)
 	}
 	-- LuaFormatter on
 
-	print(colors('%{bright green}===== ' .. dict[mode] .. ' MODE ====='))
+	print(colors('%{green}MODE:%{reset} ' .. dict[mode]))
 
 	-- Mode details
 	-- LuaFormatter off
@@ -235,6 +233,7 @@ local function pr_options(mode, params, opt)
 	-- LuaFormatter on
 
 	-- Info warnings
+	if opt.no_files then pr_info('No files/paths specified, using current directory.') end
 	if opt.mock then pr_info('Running in mock mode. No changes will be made.') end
 	if opt.disallow then
 		pr_info('Running in disallow mode. Listed files are ignored from current directory.')
@@ -390,16 +389,6 @@ end
 
 --- Run rename action of files with given options and parameters.
 local function rename(files, action, params, opt)
-
-	-- Fix replace string if patterns is not enabled
-	if not opt.pattern and params.find then
-		-- Prefix magic characters
-		params.find = params.find:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
-		-- Convert wildcards to greedy match pattern
-		params.find = params.find:gsub("%%%*", ".*")
-		params.find = params.find:gsub("%%%?", ".*")
-	end
-
 	-- Source - https://stackoverflow.com/a/11402486
 	-- Posted by Bart Kiers, modified by community. See post 'Timeline' for change history
 	-- Retrieved 2026-11-19, License - CC BY-SA 3.0
@@ -417,12 +406,6 @@ local function rename(files, action, params, opt)
 		return p
 	end
 
-	-- Make patterns case insenstive if need be.
-	if not opt.sensitive and params.find then params.find = case_insensitive_pattern(params.find) end
-
-	-- Set up enumerator.
-	opt._enumerator = enumerate(opt.start, opt.increment)
-
 	local function name_clash(names)
 		local seen = {}
 		for _, value in pairs(names) do
@@ -431,6 +414,23 @@ local function rename(files, action, params, opt)
 		end
 		return false
 	end
+
+	if params.find then
+		-- Fix replace string if patterns is not enabled
+		if not opt.pattern then
+			-- Prefix magic characters
+			params.find = params.find:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+			-- Convert wildcards to greedy match pattern
+			params.find = params.find:gsub("%%%*", ".*")
+			params.find = params.find:gsub("%%%?", ".*")
+		end
+
+		-- Make patterns case insenstive if need be.
+		if not opt.sensitive then params.find = case_insensitive_pattern(params.find) end
+	end
+
+	-- Set up enumerator.
+	opt._enumerator = enumerate(opt.start, opt.increment)
 
 	local new_names = {}
 	for _, file in ipairs(files) do
@@ -449,7 +449,7 @@ local function rename(files, action, params, opt)
 
 	local confirm = 'n'
 	if not (opt.mock or opt.yes) then
-		io.write(colors'\nContinue with operation? %{underline}(Y/n)%{reset}: ')
+		io.write(colors'\nContinue with operation? (%{underline}Y/n%{reset}): ')
 		confirm = io.read(1)
 	end
 
@@ -505,7 +505,7 @@ local function get_files(index, opt)
 			end
 		end
 	else
-		pr_info('No files/paths specified, using current directory.')
+		opt.no_files = true
 	end
 	table.sort(file_list, function(a, b) return a:lower() < b:lower() end)
 	return file_list
@@ -513,8 +513,8 @@ end
 
 -- Parses options and filenames after mode parameters are parsed.
 local function parse_opts_files(index)
-	--- Options table
 	-- LuaFormatter off
+	--- Options table
 	local opt = {
 		sensitive = false,
 		disallow = false,
@@ -544,7 +544,11 @@ local function parse_opts_files(index)
 		['-n'] = 'name',
 		['-p'] = 'pos',
 		['-s'] = 'start',
-		['-t'] = 'to'
+		['-t'] = 'to',
+
+		-- Hidden internal flags
+		no_files = false,
+		_enumerator = false
 	}
 	-- LuaFormatter on
 
