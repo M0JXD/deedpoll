@@ -37,7 +37,7 @@ end
 
 test{
 	name = 'Remove accents.',
-	cmd = 'deedpoll case accent',
+	cmd = 'deedpoll accent',
 	input = {
 		'újjáválaszthatóságáról'
 	},
@@ -48,7 +48,7 @@ test{
 
 test{
 	name = 'First character case.',
-	cmd = 'deedpoll case first',
+	cmd = 'deedpoll first',
 	input = {
 		'the FIRST character tEST.txt'
 	},
@@ -59,7 +59,7 @@ test{
 
 test{
 	name = 'Lower case on full filenames.',
-	cmd = 'deedpoll case lower --name=full',
+	cmd = 'deedpoll lower --name=full',
 	input = {
 		'TEST.TXT'
 	},
@@ -70,7 +70,7 @@ test{
 
 test{
 	name = 'Title case.',
-	cmd = 'deedpoll case title',
+	cmd = 'deedpoll title',
 	input = {
 		'title mode test.txt'
 	},
@@ -81,7 +81,7 @@ test{
 
 test{
 	name = 'Upper case on full filenames.',
-	cmd = 'deedpoll case upper --name=full',
+	cmd = 'deedpoll upper --name=full',
 	input = {
 		'test.txt'
 	},
@@ -204,7 +204,7 @@ test{
 
 test{
 	name = 'Extension only.',
-	cmd = 'deedpoll case lower --name=ext',
+	cmd = 'deedpoll lower --name=ext',
 	input = {
 		'TEST.TXT'
 	},
@@ -215,7 +215,7 @@ test{
 
 test{
 	name = 'Hidden files.',
-	cmd = 'deedpoll case upper --hidden',
+	cmd = 'deedpoll upper --hidden',
 	input = {
 		'.testname'
 	},
@@ -226,7 +226,7 @@ test{
 
 test{
 	name = 'Specified hidden files without --hidden.',
-	cmd = 'deedpoll case upper',
+	cmd = 'deedpoll upper',
 	files = {
 		'.testname'
 	},
@@ -240,7 +240,7 @@ test{
 
 test{
 	name = 'Disallow mode.',
-	cmd = 'deedpoll case upper --disallow',
+	cmd = 'deedpoll upper --disallow',
 	files = {
 		'not me.txt'
 	},
@@ -256,7 +256,7 @@ test{
 
 test{
 	name = 'Mock mode.',
-	cmd = 'deedpoll case upper --mock',
+	cmd = 'deedpoll upper --mock',
 	input = {
 		'lowercase.txt'
 	},
