@@ -167,7 +167,7 @@ end
 
 --- Print version information and exit.
 local function pr_version()
-	print('Deedpoll 0.0.1  Copyright (C) 2026 Jamie Drinkell')
+	print('Deedpoll 0.0.2  Copyright (C) 2026 Jamie Drinkell')
 	os.exit()
 end
 
