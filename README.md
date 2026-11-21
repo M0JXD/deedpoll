@@ -8,7 +8,7 @@ Deedpoll is made with Lua and should run in any Lua 5.1 or later interpreter, in
 ## Usage
 
 In most terminals, Deedpoll's output is colourful:
-- Directories are shown in bold blue, akin to `ls`
+- Directories are shown in bold blue, akin to `ls`.
 - In the case where a rename does not cause a change, Deedpoll uses a cyan arrow instead of a yellow one.
 - Parameters/option overviews and informational text use colours to make them easier to read.
 
