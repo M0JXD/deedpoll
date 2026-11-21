@@ -1,4 +1,4 @@
--- Copyright 2026 Jamie Drinkell
+-- Copyright 2026 Jamie Drinkell. MIT LICENSE.
 
 --- Terminal Color Library
 -- @section ansicolor
@@ -185,9 +185,8 @@ local function pr_options(mode, params, opt)
 		b = 'basenames.',
 		e = 'filename extensions.',
 		find = colors '%{yellow}FIND:',
-		replace = colors '%{yellow}REPLACE:',
-		insert = colors '%{yellow}INSERT:',
-		insert_pos = colors '%{magenta}AT:',
+		text = colors '%{yellow}TEXT:',
+		pos = colors '%{magenta}POSITION:',
 		increment = colors '%{magenta}INCREMENT:',
 		start = colors '%{magenta}START NUMBER:',
 		sensitivity = colors '%{magenta}CASE SENSITIVITY:',
@@ -203,26 +202,25 @@ local function pr_options(mode, params, opt)
 	-- Mode details
 	-- LuaFormatter off
 	if mode == 'd' then
-		print(string.format('%s %d %s', dict.from, opt.pos, opt.pos_end and 'from the end.' or '\b'))
-		print(string.format('%s %d %s', dict.to, opt.to, opt.to_end and 'from the end.' or '\b'))
-	elseif mode == 's' or mode == 'r' then
+		print(string.format('%s %d %s', dict.from, opt.pos, opt.pos_end and '(from the end)' or '\b'))
+		print(string.format('%s %d %s', dict.to, opt.to, opt.to_end and '(from the end)' or '\b'))
+	elseif mode == 'r' then
 		print(string.format('%s "%s"', dict.find, params.find))
-		print(string.format('%s "%s"', dict.replace, params.text))
+		print(string.format('%s "%s"', dict.text, params.text))
 		print(string.format('%s %s, %s %s, %s %d, %s %d',
 			dict.pattern, opt.pattern and 'ON' or 'OFF',
 			dict.sensitivity, opt.sensitive and 'ON' or 'OFF',
-			dict.increment, opt.increment,
-			dict.start, opt.start
+			dict.start, opt.start,
+			dict.increment, opt.increment
 		))
 	elseif mode == 'i' then
-		print(string.format('%s "%s"', dict.insert, params.text))
-		print(string.format('%s %d %s',
-			dict.insert_pos, opt.pos, opt.pos_end and 'from the end.' or '\b'))
-		print(string.format('%s %s, %s %d, %s %d',
+		print(string.format('%s "%s"', dict.text, params.text))
+		print(string.format('%s %d %s, %s %s, %s %d, %s %d',
+			dict.pos, opt.pos, opt.pos_end and '(from the end)' or '\b',
 			dict.overwrite, opt.overwrite and 'ON' or 'OFF',
-			dict.increment, opt.increment,
-			dict.start, opt.start
-		))
+			dict.start, opt.start,
+			dict.increment, opt.increment
+			))
 	end
 	-- LuaFormatter on
 
@@ -324,32 +322,37 @@ local renamers = {
 	f = function(name, params, opt) return name:sub(1, 1):upper() .. name:sub(2):lower() end,
 	-- Delete Renamer
 	d = function(name, params, opt)
-		local index1, index2, index3, index4
-		if not opt.pos_end and not opt.to_end then
-			index1, index2, index3, index4 = 1, opt.pos - 1, opt.to, -1
-		elseif opt.pos_end and not opt.to_end then
-			index1, index2 = 1, opt.to - 1
-			index3, index4 = -opt.pos + 1, opt.pos <= 1 and 1 or -1
-		elseif not opt.pos_end and opt.to_end then
-			-- TODO
-			index1, index2 = 1, -opt.to - 1
-			index3, index4 = opt.pos + 1, opt.pos <= 1 and 1 or -1
-		elseif opt.pos_end and opt.to_end then
-			-- TODO
-			index1, index2, index3, index4 = 1, 2, 3, 4
+		-- TODO: UTF-8 lengths instead of byte lengths
+		local length = name:len()
+		local from_index = opt.pos - 1
+		if opt.pos_end then
+			from_index = math.max(length - from_index, 0)
+		else
+			from_index = math.min(length, from_index)
 		end
-		name = name:sub(index1, index2) .. name:sub(index3, index4)
-		return name
+
+		local to_index = opt.to - 1
+		if opt.to_end then
+			to_index = math.max(length - to_index, 0)
+		else
+			to_index = math.min(length, to_index)
+		end
+
+		return name:sub(1, math.min(from_index, to_index)) ..
+			name:sub(math.max(from_index, to_index) + 1)
 	end,
 	-- Insert Renamer
 	i = function(name, params, opt)
 		local text = enumerate_pattern(params.text, opt)
+		local length = name:len()
+		local from_index = opt.pos - 1
 		if opt.pos_end then
-			return name:sub(1, name:len() - opt.pos) .. params.text ..
-				name:sub(name:len() - opt.pos + 1)
+			from_index = math.max(length - from_index, 0)
 		else
-			return name:sub(1, opt.pos - 1) .. text .. name:sub(opt.pos)
+			from_index = math.min(length, from_index)
 		end
+
+		return name:sub(1, from_index) .. text .. name:sub(from_index + 1)
 
 	end,
 	-- Replace Renamer
@@ -357,9 +360,7 @@ local renamers = {
 		local text = params.text
 		if name:find(params.find) then text = enumerate_pattern(params.text, opt) end
 		return name:gsub(params.find, text, 1)
-	end,
-	-- Search Renamer
-	s = function(name, params, opt) return name end
+	end
 }
 
 --- Handles leading paths and base/ext/full behaviour before running rename action.
@@ -577,11 +578,14 @@ local function parse_opts_files(index)
 					opt.to = tonumber(opt.to:match('%d'))
 				end
 
+				if opt.pos < 1 or opt.to < 1 then
+					pr_err('Positions can\'t be less than 1!')
+				end
+
 				-- Convert number arguments
 				if type(opt.increment) == 'string' then
 					opt.increment = tonumber(opt.increment)
 				end
-
 				if type(opt.start) == 'string' then opt.start = tonumber(opt.start) end
 
 				-- Check and correct errors
@@ -632,7 +636,7 @@ local function parse_cli()
 	return mode, params, opt, files
 end
 
--- Check if any arg is a version or help request
+-- Check if any arg is a version or help request.
 if not arg[1] then pr_help() end
 for k, v in ipairs(arg) do
 	if v:find('-h', 1, true) then pr_help() end
