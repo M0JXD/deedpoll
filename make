@@ -2,7 +2,7 @@
 -- Copyright 2026 Jamie Drinkell
 --- Make & Test system for Deedpoll
 
-local lfs = require('lfs')
+require('lfs')
 local tests = require('tests')
 local colors = require('lib.ansicolors')
 
@@ -58,8 +58,7 @@ if arg[1] == 't' or arg[1] == 'test' then
 		lfs.chdir('..')
 		os.execute(delete_dir .. 'test')
 	end
-	-- TODD: Search mode is inherently different as it searches within files
-	-- Plan is to run replace modes tests on file contents instead.
+	-- TODD: Planned search mode would be inherently different as it searches within files
 
 elseif arg[1] == 'i' or arg[1] == 'install' then
 	io.write('INSTALLING TO "' .. install .. '"...')
