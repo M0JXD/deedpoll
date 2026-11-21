@@ -36,8 +36,14 @@ if arg[1] == 't' or arg[1] == 'test' then
 		lfs.mkdir('test')
 		lfs.chdir('test')
 
-		-- Create test file(s)
-		for _, name in ipairs(test.input) do io.open(name, "w"):close() end
+		-- Create test file/dir (s)
+		for _, name in ipairs(test.input) do
+			if name:find('.*/') then
+				lfs.mkdir(name)
+			else
+				io.open(name, "w"):close()
+			end
+		end
 
 		-- Run rename operation
 		test.cmd = test.cmd .. ' --yes'
@@ -46,10 +52,9 @@ if arg[1] == 't' or arg[1] == 'test' then
 				test.cmd = string.format('%s "%s"', test.cmd, file)
 			end
 		end
-
 		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 
-		-- Check expected filename(s) exist
+		-- Check expected file/dir (s) exist
 		local pass = colors(' [%{green}PASS%{reset}]\n')
 		for _, name in ipairs(test.expected) do
 			if not lfs.attributes(name) then pass = colors(' [%{red}FAIL%{reset}]\n') end
