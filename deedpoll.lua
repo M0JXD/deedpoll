@@ -114,24 +114,22 @@ local function pr_help()
 	local parameters = colors('%{yellow}[PARAMETERS]')
 	local options = colors('%{magenta}[OPTIONS]')
 	local files = colors('%{blue}[FILES]')
-	local usage = string.format(colors('%{bright}Usage:%{reset}') .. ' deedpoll %s %s %s %s\n', mode, parameters, options, files)
+	local usage = string.format(colors('%{bright}Usage:%{reset}') .. ' deedpoll %s %s %s %s', mode, parameters, options, files)
 	print(usage)
-	print(mode)
-	print(colors '  %{cyan}case    (c)%{reset}  Changes character cases.')
+	print('\n' .. mode)
+	print(colors '  %{cyan}accent  (a)%{reset}  Removes accents in the file name.')
 	print(colors '  %{cyan}delete  (d)%{reset}  Delete characters between specified positions.')
-	-- print(colors '  %{cyan}search  (s)%{reset}  Search and replace within file contents.')
+	print(colors '  %{cyan}first   (f)%{reset}  Makes first character uppercase.')
 	print(colors '  %{cyan}insert  (i)%{reset}  Insert text into filename.')
-	print(colors '  %{cyan}replace (r)%{reset}  Replace text in filename.\n')
-	print(parameters)
-	print(colors '  %{bright}ACTION%{reset}  Case change to apply in case mode.')
-	print(colors '    %{cyan}accent (a)%{reset}  Removes accents in the file name.')
-	print(colors '    %{cyan}first  (f)%{reset}  Makes first character uppercase.')
-	print(colors '    %{cyan}lower  (l)%{reset}  Changes names to lower case.')
-	print(colors '    %{cyan}title  (t)%{reset}  Changes names to title case.')
-	print(colors '    %{cyan}upper  (u)%{reset}  Changes names to upper case')
+	print(colors '  %{cyan}lower   (l)%{reset}  Changes names to lower case.')
+	print(colors '  %{cyan}replace (r)%{reset}  Replace text in filename.')
+	-- print(colors '  %{cyan}search  (s)%{reset}  Search and replace within file contents.')
+	print(colors '  %{cyan}title   (t)%{reset}  Changes names to title case.')
+	print(colors '  %{cyan}upper   (u)%{reset}  Changes names to upper case')
+	print('\n' .. parameters)
 	print(colors '  %{bright}FIND%{reset}  Find text for replace mode. Wildcards ? and * are supported.')
-	print(colors '  %{bright}TEXT%{reset}  Text for insert/replace mode. Use %n, %0n, %00n etc. to enumerate.\n')
-	print(options)
+	print(colors '  %{bright}TEXT%{reset}  Text for insert/replace mode. Use %n, %0n, %00n etc. to enumerate.')
+	print('\n' .. options)
 	print(colors '  %{cyan}-c/--case%{reset}       Enable case sensitivity in replace mode.')
 	print(colors '  %{cyan}-d/--disallow%{reset}   Listed files are not processed from current directory.')
 	print(colors '  %{cyan}-e/--exp%{reset}        Treat replace mode find strings as Lua patterns.')
@@ -142,7 +140,7 @@ local function pr_help()
 	print(colors '  %{cyan}-n=/--name=%{reset}     [(b)ase/(e)xt/(f)ull] aspect of filename to change.')
 	print(colors '  %{cyan}-o/--overwrite%{reset}  Enable overwrite for insert mode.')
 	print(colors '  %{cyan}-p=/--pos=%{reset}      Start position for insert/delete.')
-	print(colors '  %{cyan}-r/--recurse%{reset}    Recurse directories for all files.')
+	print(colors '  %{cyan}-r/--recurse%{reset}    Recurse search for files. Directories are not be renamed.')
 	print(colors '  %{cyan}-s=/--start=%{reset}    Start number for incremented %n patterns.')
 	print(colors '  %{cyan}-t=/--to=%{reset}       Position to delete to in delete mode.')
 	print(colors '  %{cyan}-v/--version%{reset}    Show version information.')
@@ -154,7 +152,7 @@ local function pr_help()
 	print(colors '  For pos/to, pre/postfix the letter \'e\' to the value to specify from the end.\n')
 	print(colors '%{bright}EXAMPLES%{reset}')
 	print(colors '  %{dim}# Change whole filename including the extension to uppercase')
-	print(colors '  deedpoll case upper -n=full')
+	print(colors '  deedpoll upper -n=full')
 	print(colors '  %{dim}# Delete characters from 2nd to 5th letter')
 	print(colors '  deedpoll delete --pos=2 --to=5')
 	print(colors '  %{dim}# Insert "text {n}" at start, incrementing in 2\'s, no confirmation')
@@ -167,7 +165,7 @@ end
 
 --- Print version information and exit.
 local function pr_version()
-	print('Deedpoll 0.0.2  Copyright (C) 2026 Jamie Drinkell')
+	print('Deedpoll 0.1.0  Copyright (C) 2026 Jamie Drinkell')
 	os.exit()
 end
 
@@ -175,19 +173,17 @@ end
 local function pr_options(mode, params, opt)
 	-- LuaFormatter off
 	local dict = {
-		c = 'CASE',
 		d = 'DELETE',
 		s = 'SEARCH',
 		i = 'INSERT',
 		r = 'REPLACE',
-		t = 'Changing names to title case.',
-		l = 'Changing names to lowercase.',
-		u = 'Changing names to uppercase.',
-		a = 'Removing accents from names.',
-		f = 'Changing names to first character uppercase.',
+		t = 'TITLE CASE',
+		l = 'LOWERCASE',
+		u = 'UPPERCASE',
+		a = 'REMOVE ACCENTS',
+		f = 'FIRST CHARACTER UPPERCASE',
 		b = 'basenames.',
 		e = 'filename extensions.',
-		action = colors '%{yellow}ACTION:',
 		find = colors '%{yellow}FIND:',
 		replace = colors '%{yellow}REPLACE:',
 		insert = colors '%{yellow}INSERT:',
@@ -206,9 +202,7 @@ local function pr_options(mode, params, opt)
 
 	-- Mode details
 	-- LuaFormatter off
-	if mode == 'c' then
-		print(dict.action .. ' ' .. dict[params.case])
-	elseif mode == 'd' then
+	if mode == 'd' then
 		print(string.format('%s %d %s', dict.from, opt.pos, opt.pos_end and 'from the end.' or '\b'))
 		print(string.format('%s %d %s', dict.to, opt.to, opt.to_end and 'from the end.' or '\b'))
 	elseif mode == 's' or mode == 'r' then
@@ -388,7 +382,8 @@ local function rename_action(name, action, params, opt)
 end
 
 --- Run rename action of files with given options and parameters.
-local function rename(files, action, params, opt)
+local function rename(files, mode, params, opt)
+	local action = renamers[mode]
 	-- Source - https://stackoverflow.com/a/11402486
 	-- Posted by Bart Kiers, modified by community. See post 'Timeline' for change history
 	-- Retrieved 2026-11-19, License - CC BY-SA 3.0
@@ -546,7 +541,7 @@ local function parse_opts_files(index)
 		['-s'] = 'start',
 		['-t'] = 'to',
 
-		-- Hidden internal flags
+		-- Hidden internal parameters
 		no_files = false,
 		_enumerator = false
 	}
@@ -608,32 +603,20 @@ local function parse_opts_files(index)
 	return opt, get_files(first_file, opt)
 end
 
---- Table of CLI parameter parsers for each mode.
-local parse = {
-	-- Case mode parser
-	c = function()
-		-- Parse arg[2]
-		local params = {}
-		params.case = arg[2] and arg[2]:sub(1, 1) or 'n'
-		if not params.case:find('[tluaf]') then
-			pr_err('Please specify a valid case mode parameter as second argument!')
-		end
-		return 3, params
-	end,
-	-- Delete mode parser
-	d = function() return 2, {} end,
+local function parse_cli()
+	local index, params = 2, {}
+	local mode = arg[1]:sub(1, 1)
+	if not mode:find('[adfilrtu]') then pr_err('Invalid mode specified!') end
+
 	-- Insert mode parser
-	i = function()
-		local params = {}
+	if mode == 'i' then
 		if not arg[2] or arg[2]:sub(1, 1) == '-' then
 			pr_err('Please provide text to insert as second argument!')
 		end
 		params.text = arg[2]
-		return 3, params
-	end,
-	-- Replace/Search mode parser
-	r = function()
-		local params = {}
+		index = 3
+		-- Replace mode parser
+	elseif mode == 'r' then
 		if not arg[2] or arg[2]:sub(1, 1) == '-' then
 			pr_err('Please provide text to find as second argument!')
 		end
@@ -642,9 +625,12 @@ local parse = {
 			pr_err('Please provide replace text as third argument!')
 		end
 		params.text = arg[3]
-		return 4, params
+		index = 4
 	end
-}
+
+	local opt, files = parse_opts_files(index)
+	return mode, params, opt, files
+end
 
 -- Check if any arg is a version or help request
 if not arg[1] then pr_help() end
@@ -653,11 +639,6 @@ for k, v in ipairs(arg) do
 	if v:find('-v', 1, true) then pr_version() end
 end
 
-local mode = arg[1]:sub(1, 1)
-if not mode:find('[cidsr]') then pr_err('Invalid mode specified!') end
--- Index is for the next CLI item that needs parsed after parameters are understood
-local index, params = parse[mode == 's' and 'r' or mode]()
-local action = renamers[mode == 'c' and params.case or mode]
-local opt, files = parse_opts_files(index)
+local mode, params, opt, files = parse_cli()
 pr_options(mode, params, opt)
-rename(files, action, params, opt)
+rename(files, mode, params, opt)
