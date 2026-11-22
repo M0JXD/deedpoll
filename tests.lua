@@ -262,7 +262,7 @@ test{
 }
 
 test{
-	name = 'Replace with case sensitivity.',
+	name = 'Replace with case sensitivity. (Expected fail on Windows.)',
 	cmd = 'deedpoll replace "*ABC" "123" --case',
 	input = {
 		'REPLACE ABC IGNORE.txt',
