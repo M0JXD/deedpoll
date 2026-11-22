@@ -29,6 +29,7 @@ end
 if arg[1] == 't' or arg[1] == 'test' then
 	local null_redirect = isWindows and '> nul' or '> /dev/null'
 	local delete_dir = isWindows and 'rmdir /s /q ' or 'rm -rf '
+	if arg[2] == '-V' or arg[2] == '--verbose' then null_redirect = '' end
 
 	print(colors'%{bright cyan}===== DEEDPOLL TEST SUITE =====')
 
@@ -65,6 +66,7 @@ if arg[1] == 't' or arg[1] == 'test' then
 		io.write(pass)
 		lfs.chdir('..')
 		os.execute(delete_dir .. 'test')
+		if arg[2] == '-V' or arg[2] == '--verbose' then print('\n') end
 	end
 	-- TODD: Planned search mode would be inherently different as it searches within files
 
