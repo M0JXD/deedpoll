@@ -23,6 +23,7 @@
 -- THE SOFTWARE.
 
 --- Detect if color mode would be supported.
+-- @return truthy or falsey value whether the environment supports color sequences.
 local function colorSupport()
 	local isWindows = type(package) == 'table' and type(package.config) == 'string' and
 		package.config:sub(1, 1) == '\\'
@@ -46,6 +47,7 @@ local escapeString = string.char(27) .. '[%dm'
 
 --- Inserts the escape character to the terminal number.
 -- @param terminal number to insert.
+-- @return Escape string with number added.
 local function escapeNumber(number)
 	return escapeString:format(number)
 end
@@ -54,6 +56,7 @@ local supported = colorSupport()
 
 --- Converts key to terminal escape code.
 -- @param str key to substitute with escape code.
+-- @return String with escape codes substituted.
 local function escapeKeys(str)
 	if not supported then return "" end
 
@@ -69,14 +72,16 @@ local function escapeKeys(str)
 end
 
 --- Replaces %{key} codes.
--- @param str String with %{key} entries to apply colors to.
+-- @param str String with %{key} entries to color in.
+-- @return String with keys replaced for terminal sequences.
 local function replaceCodes(str)
 	str = string.gsub(str, "(%%{(.-)})", function(_, str) return escapeKeys(str) end)
 	return str
 end
 
 --- Apply terminal colors with automatic reset.
--- @param str String with %{key} to color in.
+-- @param str String with %{key} entries to color in.
+-- @param  String with keys replaced for terminal sequences.
 local function ansicolors(str)
 	str = tostring(str or '')
 	return replaceCodes('%{reset}' .. str .. '%{reset}')
