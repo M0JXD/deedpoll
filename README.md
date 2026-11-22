@@ -98,11 +98,11 @@ On the converse, Deedpoll enables the user to use Lua patterns, which are simple
 
 ## Install
 
-Most systems should provide installable packages for [Lua][1] and [LuaFileSystem][2].
+Most systems should provide installable packages for [Lua][4] and [LuaFileSystem][5].
 Releases offers the ready to run script with a shebang added that can be used directly, and placed with the user's other binaries.
 
-[1]: https://www.lua.org/
-[2]: https://lunarmodules.github.io/luafilesystem/
+[4]: https://www.lua.org/
+[5]: https://lunarmodules.github.io/luafilesystem/
 
 Alternatively, use Deedpoll's custom Lua build system. Clone the source and use `./make && ./make install` to install to */usr/local*.
 The second argument can be set with a different install prefix, e.g. `./make install ~/.local`.
