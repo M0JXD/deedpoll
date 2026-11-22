@@ -468,9 +468,7 @@ local function rename(mode, params, opt, files)
 		for _, file in ipairs(files) do
 			local renamed = rename_action(file, action, params, opt)
 			local success, err = os.rename(file, renamed)
-			if not success then
-				pr_err(err)
-			end
+			if not success then pr_err(err) end
 		end
 		print(colors('\n%{green}Files renamed!'))
 	else
