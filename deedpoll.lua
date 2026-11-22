@@ -87,7 +87,6 @@ local colors = (function()
 
 	return setmetatable({noReset = replaceCodes},
 		{__call = function(_, str) return ansicolors(str) end})
-
 end)()
 
 --- Deedpoll
