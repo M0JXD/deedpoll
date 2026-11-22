@@ -178,6 +178,9 @@ local function pr_version()
 end
 
 --- Prints option information for given mode.
+-- @param mode Deedpoll operating mode.
+-- @param params Deedpoll parameter table.
+-- @param opt Deedpoll options table.
 local function pr_options(mode, params, opt)
 	-- LuaFormatter off
 	local dict = {
@@ -247,6 +250,9 @@ local function pr_options(mode, params, opt)
 end
 
 --- Closure to enumerate with given increment.
+-- @param start Starting number to enumerate from.
+-- @param increment Step to increment on each enumeration.
+-- @return Closure that enumerates.
 local function enumerate(start, increment)
 	local count = start - increment
 	local inc = increment
@@ -257,6 +263,9 @@ local function enumerate(start, increment)
 end
 
 --- Find and replace %n patterns.
+-- @param str String to check for %n patterns and enumerate.
+-- @param opt Deedpoll options table.
+-- @return String with enumrations inserted.
 local function enumerate_pattern(str, opt)
 	if str:find('%%0*n') then
 		local enumerate_val = opt._enumerator()
@@ -277,6 +286,10 @@ end
 
 --- Table of renamer functions.
 -- Caller is expected to have trimmed out the ext or basename depending, and done initial setup.
+-- @param name String to rename.
+-- @param params Deedpoll parameter table.
+-- @param opt Deedpoll options table.
+-- @return Renamed string.
 local renamers = {
 	-- Title Case Renamer
 	t = function(name, params, opt)
@@ -376,6 +389,11 @@ local renamers = {
 }
 
 --- Handles leading paths and base/ext/full behaviour before running rename action.
+-- @param name String to rename.
+-- @param rename function to use.
+-- @param params Deedpoll parameter table.
+-- @param opt Deedpoll options table.
+-- @return Renamed string.
 local function rename_action(name, action, params, opt)
 	local prepath = ''
 	if name:find('/') then
@@ -395,11 +413,19 @@ local function rename_action(name, action, params, opt)
 end
 
 --- Run rename action of files with given options and parameters.
+-- @param mode Deedpoll operating mode.
+-- @param params Deedpoll parameter table.
+-- @param opt Deedpoll options table.
+-- @param files List of files to rename.
 local function rename(mode, params, opt, files)
 	local action = renamers[mode]
 	-- Source - https://stackoverflow.com/a/11402486
 	-- Posted by Bart Kiers, modified by community. See post 'Timeline' for change history
 	-- Retrieved 2026-11-19, License - CC BY-SA 3.0
+
+	--- Makes a given pattern case insensitive.
+	-- @param pattern Pattern to change.
+	-- @return Case insensitive version of the pattern.
 	local function case_insensitive_pattern(pattern)
 		-- find an optional '%' (group 1) followed by any character (group 2)
 		local p = pattern:gsub("(%%?)(.)", function(percent, letter)
@@ -414,6 +440,9 @@ local function rename(mode, params, opt, files)
 		return p
 	end
 
+	--- Search a table for duplicate names that would clash.
+	-- @param names table of filenames to search.
+	-- @return boolean true if clash found.
 	local function name_clash(names)
 		local seen = {}
 		for _, value in pairs(names) do
@@ -486,6 +515,9 @@ local function rename(mode, params, opt, files)
 end
 
 --- Get's list of files from remaining CLI arguments, or failing that the current directory.
+-- @param index Starting index of CLI arguments to parse for files. May be nil if there are none.
+-- @param opt Deedpoll options table.
+-- @return List of files.
 local function get_files(index, opt)
 
 	-- Source - https://stackoverflow.com/a/49405922
@@ -526,7 +558,7 @@ local function get_files(index, opt)
 	-- @param path Starting path to search from.
 	-- @param opt Options table which will tell whether to recurse and include hidden files.
 	-- @param ignore Dictionary of paths not to recurse.
-	-- @return iterator
+	-- @return list of files found.
 	local function get_dir(path, opt, ignore)
 		local file_list = {}
 		if opt.recurse then
@@ -547,6 +579,8 @@ local function get_files(index, opt)
 		return file_list
 	end
 
+	--- Check the argument is not an option and the file exists, exiting with error otherwise.
+	-- @param arg Argument to check.
 	local function check_arg(arg)
 		-- Check it's not an option
 		if arg:sub(1, 1) == '-' then pr_err('Please list all options before files!') end
@@ -605,6 +639,8 @@ local function get_files(index, opt)
 end
 
 -- Parses options and filenames after mode parameters are parsed.
+-- @param index Starting index of CLI arguments to parse for options.
+-- @return Options table, list of files.
 local function parse_opts_files(index)
 	-- LuaFormatter off
 	--- Options table
@@ -704,6 +740,8 @@ local function parse_opts_files(index)
 	return opt, get_files(first_file, opt)
 end
 
+-- Parses CLI options.
+-- @return mode, parameters table, options table, file list.
 local function parse_cli()
 	local index, params = 2, {}
 	local mode = arg[1]:sub(1, 1)
