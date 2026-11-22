@@ -72,6 +72,10 @@ EXAMPLES
 Deedpoll does not heaviliy sanitise it's CLI arguments.
 For example, `deedpoll any` will resolve to the remove accent mode, as the argument begins with *a*.
 
+### Hidden files
+
+Use `--name=full` if you need to work with hidden files/directories, as by default all dots are treated as extension denominators.
+
 ## Install
 
 Most systems should provide installable packages for [Lua][1] and [LuaFileSystem][2].
