@@ -400,7 +400,7 @@ test{
 }
 
 test{
-	name = 'Recurse mode with --full.',
+	name = 'Recurse mode with `--full`.',
 	cmd = 'deedpoll upper --recurse --full',
 	input = {
 		'file.txt',
