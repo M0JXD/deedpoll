@@ -350,8 +350,12 @@ local renamers = {
 		else
 			from_index = math.min(length, from_index)
 		end
-
-		return name:sub(1, from_index) .. text .. name:sub(from_index + 1)
+		local overwrite = 0
+		if opt.overwrite then
+			overwrite = text:len()
+			if opt.pos_end then from_index = from_index - 1 end
+		end
+		return name:sub(1, from_index) .. text .. name:sub(from_index + 1 + overwrite)
 
 	end,
 	-- Replace Renamer
