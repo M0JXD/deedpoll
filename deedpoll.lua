@@ -471,7 +471,11 @@ local function get_files(index, opt)
 	local rev = {}
 	local function get_dir()
 		for file in lfs.dir(lfs.currentdir()) do
-			if file:sub(1, 1) ~= '.' then table.insert(file_list, file) end
+			if not opt.full then
+				if file:sub(1, 1) ~= '.' then table.insert(file_list, file) end
+			else
+				if file ~= '.' and file ~= '..' then table.insert(file_list, file) end
+			end
 		end
 	end
 
