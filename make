@@ -41,7 +41,7 @@ if arg[1] == 't' or arg[1] == 'test' then
 
 		-- Create test file/dir (s)
 		for _, name in ipairs(test.input) do
-			if name:find('.*/') then
+			if name:sub(-1) == '/' then
 				lfs.mkdir(name)
 			else
 				io.open(name, "w"):close()
