@@ -237,7 +237,7 @@ local function pr_options(mode, params, opt)
 	print()
 end
 
---- Closure to enumerate with given increment
+--- Closure to enumerate with given increment.
 local function enumerate(start, increment)
 	local count = start - increment
 	local inc = increment
@@ -247,7 +247,7 @@ local function enumerate(start, increment)
 	end
 end
 
---- Find and replace %n patterns
+--- Find and replace %n patterns.
 local function enumerate_pattern(str, opt)
 	if str:find('%%0*n') then
 		local enumerate_val = opt._enumerator()
@@ -267,7 +267,7 @@ local function enumerate_pattern(str, opt)
 end
 
 --- Table of renamer functions.
--- Caller is expected to have trimmed out the ext or basename depending, and done initial setup
+-- Caller is expected to have trimmed out the ext or basename depending, and done initial setup.
 local renamers = {
 	-- Title Case Renamer
 	t = function(name, params, opt)
@@ -370,7 +370,7 @@ local renamers = {
 local function rename_action(name, action, params, opt)
 	local prepath = ''
 	if name:find('/') then
-		prepath = colors(name:match('.*/'))
+		prepath = name:match('.*/')
 		name = name:match('[^/]+$')
 	end
 
@@ -433,12 +433,21 @@ local function rename(mode, params, opt, files)
 
 	local new_names = {}
 	for _, file in ipairs(files) do
-		local color = lfs.attributes(file, 'mode') == 'directory' and '%{bright blue}' or ''
 		local arrow = '%{reset bright yellow} -> %{reset}'
 		local new_name = rename_action(file, action, params, opt)
 		table.insert(new_names, new_name)
 		if new_name == file then arrow = '%{reset bright cyan} -> %{reset}' end
-		print(colors(color .. file .. arrow .. color .. new_name))
+
+		-- Highlight dirctories or leading dirs
+		if lfs.attributes(file, 'mode') == 'directory' then
+			file = '%{bright blue}' .. file
+			new_name = '%{bright blue}' .. new_name
+		elseif file:find('/') then
+			local prepath = colors('%{bright blue}' .. file:match('.*/'))
+			file = prepath .. '%{reset}' .. file:match('[^/]+$')
+			new_name = prepath .. '%{reset}' .. new_name:match('[^/]+$')
+		end
+		print(colors(file .. arrow .. new_name))
 	end
 
 	if name_clash(new_names) then
@@ -457,7 +466,11 @@ local function rename(mode, params, opt, files)
 
 	if not opt.mock and (opt.yes or confirm:find('[Yy]')) then
 		for _, file in ipairs(files) do
-			os.rename(file, rename_action(file, action, params, opt))
+			local renamed = rename_action(file, action, params, opt)
+			local success, err = os.rename(file, renamed)
+			if not success then
+				pr_err(err)
+			end
 		end
 		print(colors('\n%{green}Files renamed!'))
 	else
@@ -465,15 +478,44 @@ local function rename(mode, params, opt, files)
 	end
 end
 
+-- Source - https://stackoverflow.com/a/49405922
+-- Posted by user6889435, modified by community. See post 'Timeline' for change history
+-- Retrieved 2026-11-22, License - CC BY-SA 3.0
+function dirtree(dir)
+	assert(dir and dir ~= "", "Please pass directory parameter")
+	if string.sub(dir, -1) == "/" then dir = string.sub(dir, 1, -2) end
+
+	local function yieldtree(dir)
+		for entry in lfs.dir(dir) do
+			if entry ~= "." and entry ~= ".." then
+				entry = dir .. "/" .. entry
+				local attr = lfs.attributes(entry)
+				if attr.mode == "directory" then
+					yieldtree(entry)
+				else
+					coroutine.yield(entry, attr)
+				end
+			end
+		end
+	end
+	return coroutine.wrap(function() yieldtree(dir) end)
+end
+
 --- Get's list of files from remaining CLI arguments, or failing that the current directory.
 local function get_files(index, opt)
 	local file_list = {}
 	local function get_dir()
-		for file in lfs.dir(lfs.currentdir()) do
-			if not opt.full then
-				if file:sub(1, 1) ~= '.' then table.insert(file_list, file) end
-			else
-				if file ~= '.' and file ~= '..' then table.insert(file_list, file) end
+		if opt.recurse then
+			for file, _ in dirtree('.') do table.insert(file_list, file:sub(3)) end
+		else
+			for file in lfs.dir(lfs.currentdir()) do
+				if not opt.full then
+					if file:sub(1, 1) ~= '.' then table.insert(file_list, file) end
+				else
+					if file ~= '.' and file ~= '..' then
+						table.insert(file_list, file)
+					end
+				end
 			end
 		end
 	end
@@ -491,9 +533,10 @@ local function get_files(index, opt)
 			if not lfs.attributes(arg[i]) then
 				pr_err('File "' .. arg[i] .. '" does not exist!')
 			end
-			-- Remove any trailing / on directories
-			local filename = arg[i]:gsub('/$', '')
+
 			if opt.disallow then
+				-- Remove any trailing / on directories
+				local filename = arg[i]:gsub('/$', '')
 				-- Search the list and remove it
 				for k, v in ipairs(file_list) do
 					if v == filename then
@@ -502,8 +545,17 @@ local function get_files(index, opt)
 					end
 				end
 			else
-				-- Add it to the list
-				table.insert(file_list, filename)
+				if opt.recurse and lfs.attributes(arg[i], 'mode') == 'directory' then
+					for file, _ in dirtree(arg[i]) do
+						table.insert(file_list, file)
+					end
+
+				else
+					-- Remove any trailing / on directories
+					local filename = arg[i]:gsub('/$', '')
+					-- Add it to the list
+					table.insert(file_list, filename)
+				end
 			end
 		end
 	else
