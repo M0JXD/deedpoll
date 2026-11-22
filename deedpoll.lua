@@ -476,39 +476,55 @@ local function rename(mode, params, opt, files)
 	end
 end
 
--- Source - https://stackoverflow.com/a/49405922
--- Posted by user6889435, modified by community. See post 'Timeline' for change history
--- Retrieved 2026-11-22, License - CC BY-SA 3.0
-function dirtree(dir, opt)
-	assert(dir and dir ~= "", "Please pass directory parameter")
-	if string.sub(dir, -1) == "/" then dir = string.sub(dir, 1, -2) end
+--- Get's list of files from remaining CLI arguments, or failing that the current directory.
+local function get_files(index, opt)
 
-	local function yieldtree(dir)
-		for entry in lfs.dir(dir) do
-			if entry ~= "." and entry ~= ".." then
-				if entry:sub(1, 1) ~= '.' or opt.full then
-					local entry = dir .. "/" .. entry
-					local attr = lfs.attributes(entry)
-					if attr.mode == "directory" then
-						yieldtree(entry)
-					else
-						coroutine.yield(entry, attr)
+	-- Source - https://stackoverflow.com/a/49405922
+	-- Posted by user6889435, modified by community. See post 'Timeline' for change history
+	-- Retrieved 2026-11-22, License - CC BY-SA 3.0
+	--- Iterator function to recurse directories for files.
+	-- @param dir Starting path to recurse.
+	-- @param hidden whether to recurse hidden directories.
+	-- @param ignore Dictionary of paths not to recurse.
+	-- @return iterator
+	function dirtree(dir, hidden, ignore)
+		assert(dir and dir ~= "", "Please pass directory parameter")
+		if string.sub(dir, -1) == "/" then dir = string.sub(dir, 1, -2) end
+
+		local function yieldtree(dir)
+			local ign_search = dir:sub(1,3):find('%./') and dir:sub(3):gsub('/$', '') or dir:gsub('/$', '')
+			if not ignore[ign_search] then
+				for entry in lfs.dir(dir) do
+					if entry ~= "." and entry ~= ".." then
+						if entry:sub(1, 1) ~= '.' or hidden then
+							local entry = dir .. "/" .. entry
+							local attr = lfs.attributes(entry)
+							if attr.mode == "directory" then
+								yieldtree(entry)
+							else
+								coroutine.yield(entry, attr)
+							end
+						end
 					end
 				end
 			end
 		end
+		return coroutine.wrap(function() yieldtree(dir) end)
 	end
-	return coroutine.wrap(function() yieldtree(dir) end)
-end
 
---- Get's list of files from remaining CLI arguments, or failing that the current directory.
-local function get_files(index, opt)
-	local file_list = {}
-	local function get_dir()
+	--- Get the contents of a directory.
+	-- @param path Starting path to search from.
+	-- @param opt Options table which will tell whether to recurse and include hidden files.
+	-- @param ignore Dictionary of paths not to recurse.
+	-- @return iterator
+	local function get_dir(path, opt, ignore)
+		local file_list = {}
 		if opt.recurse then
-			for file, _ in dirtree('.', opt) do table.insert(file_list, file:sub(3)) end
+			for file, _ in dirtree(path, opt.full, ignore) do
+				table.insert(file_list, file:sub(1,3):find('%./') and file:sub(3) or file)
+			end
 		else
-			for file in lfs.dir(lfs.currentdir()) do
+			for file in lfs.dir(path) do
 				if not opt.full then
 					if file:sub(1, 1) ~= '.' then table.insert(file_list, file) end
 				else
@@ -518,38 +534,51 @@ local function get_files(index, opt)
 				end
 			end
 		end
+		return file_list
 	end
 
-	-- Presume current directory, or get for disallow mode
-	if not index or opt.disallow then get_dir() end
+	local function check_arg(arg)
+		-- Check it's not an option
+		if arg:sub(1, 1) == '-' then pr_err('Please list all options before files!') end
+		-- Check the file/directory actually exists
+		if not lfs.attributes(arg) then pr_err('File "' .. arg .. '" does not exist!') end
+	end
 
-	if index then
-		for i = index, #arg do
-			-- Check it's not an option
-			if arg[i]:sub(1, 1) == '-' then
-				pr_err('Please list all options before files!')
-			end
-			-- Check the file actually exists
-			if not lfs.attributes(arg[i]) then
-				pr_err('File "' .. arg[i] .. '" does not exist!')
-			end
-
+	local file_list = {}
+	if index then -- If we have arguments...
+		if opt.recurse then
 			if opt.disallow then
-				-- Remove any trailing / on directories
-				local filename = arg[i]:gsub('/$', '')
-				-- Search the list and remove it
-				for k, v in ipairs(file_list) do
-					if v == filename then
-						table.remove(file_list, k)
-						break
-					end
+				local ignore = {}
+				for i = index, #arg do
+					check_arg(arg[i])
+					print('Ignoring: ' .. arg[i])
+					ignore[arg[i]:gsub('/$', '')] = true
 				end
+				file_list = get_dir('.', opt, ignore)
 			else
-				if opt.recurse and lfs.attributes(arg[i], 'mode') == 'directory' then
-					for file, _ in dirtree(arg[i], opt) do
-						table.insert(file_list, file)
-					end
+				for i = index, #arg do
+					-- Only recurse the listed directories
+					check_arg(arg[i])
+					local to_add = get_dir(arg[i], opt, {})
+					for i = 1, #to_add do file_list[#file_list + 1] = to_add[i] end
+				end
 
+			end
+		else
+			-- Get the file list ahead of loop for standard disallow mode.
+			if opt.disallow then file_list = get_dir('.', opt, {}) end
+			for i = index, #arg do
+				check_arg(arg[i])
+				if opt.disallow then
+					-- Remove any trailing / on directories
+					local filename = arg[i]:gsub('/$', '')
+					-- Search the list and remove it
+					for k, v in ipairs(file_list) do
+						if v == filename then
+							table.remove(file_list, k)
+							break
+						end
+					end
 				else
 					-- Remove any trailing / on directories
 					local filename = arg[i]:gsub('/$', '')
@@ -558,7 +587,8 @@ local function get_files(index, opt)
 				end
 			end
 		end
-	else
+	else -- Presume current directory
+		file_list = get_dir('.', opt, file_list)
 		opt.no_files = true
 	end
 	table.sort(file_list, function(a, b) return a:lower() < b:lower() end)
