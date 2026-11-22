@@ -25,7 +25,7 @@ Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
   TEXT  Text for insert/replace mode. Use %n, %0n, %00n etc. to enumerate.
 
 [OPTIONS]
-  -c/--case       Enable case sensitivity in replace mode.
+  -c/--case       Enable case sensitivity in replace mode (Non-Windows only).
   -d/--disallow   Listed files are not processed from current directory.
   -e/--exp        Treat replace mode find strings as Lua patterns.
   -f/--full       Use full file list including hidden dotfiles.
@@ -54,8 +54,8 @@ EXAMPLES
   deedpoll delete --pos=2 --to=5
   # Insert "text {n}" at start, incrementing in 2's, no confirmation
   deedpoll insert "text %n" -i=2 -y
-  # Replace "old" with "new" in current directory except for "ignore.txt"
-  deedpoll replace "old" "new" -d ignore.txt
+  # Replace "old" with "new" in current directory except for "old_ignore.txt"
+  deedpoll replace "old" "new" -d old_ignore.txt
 ```
 
 ### Color
