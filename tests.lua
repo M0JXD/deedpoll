@@ -319,7 +319,7 @@ test{
 
 test{
 	name = 'Use full listing with hidden files.',
-	cmd = 'deedpoll upper --full',
+	cmd = 'deedpoll upper --full --name=full',
 	input = {
 		'testfile',
 		'.testname'
@@ -332,7 +332,7 @@ test{
 
 test{
 	name = 'Act on listed hidden files without `--full`.',
-	cmd = 'deedpoll upper',
+	cmd = 'deedpoll upper --name=full',
 	files = {
 		'.testname'
 	},
