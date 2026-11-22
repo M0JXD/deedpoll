@@ -69,9 +69,10 @@ if arg[1] == 't' or arg[1] == 'test' then
 	-- TODD: Planned search mode would be inherently different as it searches within files
 
 elseif arg[1] == 'i' or arg[1] == 'install' then
-	io.write('INSTALLING TO "' .. install .. '"...')
 	if isWindows then
+		print(colors('Installing on Windows is not yet supported. [%{red}FAIL%{reset}%{reset}]'))
 	else
+		io.write('INSTALLING TO "' .. install .. '"...')
 		local cmd = string.format(
 			'cp build/deedpoll %s/bin 2>/dev/null || sudo cp build/deedpoll %s/bin 2>/dev/null',
 			install, install)
@@ -79,9 +80,10 @@ elseif arg[1] == 'i' or arg[1] == 'install' then
 	end
 
 elseif arg[1] == 'u' or arg[1] == 'uninstall' then
-	io.write('UNINSTALLING FROM "' .. install .. '"... ')
 	if isWindows then
+		print(colors('Installing on Windows is not yet supported. [%{red}FAIL%{reset}%{reset}]'))
 	else
+		io.write('UNINSTALLING FROM "' .. install .. '"... ')
 		local cmd = string.format(
 			'rm -f %s/bin/deedpoll 2>/dev/null || sudo rm -f %s/bin/deedpoll 2>/dev/null', install,
 			install)
@@ -99,22 +101,17 @@ elseif arg[1] == 'c' or arg[1] == 'clean' then
 		return true
 	end)
 elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
-	io.write('BUILDING... ')
-	lfs.mkdir('build')
-	local cmd = ''
 	if isWindows then
+		print(colors('Building for Windows is not yet supported. [%{red}FAIL%{reset}%{reset}]'))
 	else
-		cmd = string.format('%s && %s && %s', 'cp deedpoll.lua build/deedpoll',
+		lfs.mkdir('build')
+		io.write('BUILDING... ')
+		local cmd = string.format('%s && %s && %s', 'cp deedpoll.lua build/deedpoll',
 			'echo \'#!/usr/bin/env lua\' | cat - build/deedpoll > temp && mv temp build/deedpoll',
 			'chmod +x build/deedpoll')
+		run_command(cmd, function() return lfs.attributes('build/deedpoll') end)
 	end
-	run_command(cmd, function()
-		if isWindows then
-			return false
-		else
-			return lfs.attributes('build/deedpoll')
-		end
-	end)
+
 else
 	print('NO OPTION FOR "' .. arg[1] .. '"')
 end
