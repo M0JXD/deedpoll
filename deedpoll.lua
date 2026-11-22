@@ -29,13 +29,14 @@ local colors = (function()
 	-- THE SOFTWARE.
 
 	--- Detect if color mode would be supported.
+	-- @return truthy or falsey value whether the environment supports color sequences.
 	local function colorSupport()
 		local isWindows = type(package) == 'table' and type(package.config) == 'string' and
 			package.config:sub(1, 1) == '\\'
 		return isWindows and (os.getenv("ANSICON") or os.getenv('WT_SESSION')) or true
 	end
 
-	--- Color Mode Keys Map.
+	--- Color Mode Keys table.
 	local keys = {
 		-- reset
 		reset = 0, -- misc
@@ -51,12 +52,16 @@ local colors = (function()
 
 	--- Inserts the escape character to the terminal number.
 	-- @param terminal number to insert.
-	local function escapeNumber(number) return escapeString:format(number) end
+	-- @return Escape string with number added.
+	local function escapeNumber(number)
+		return escapeString:format(number)
+	end
 
 	local supported = colorSupport()
 
 	--- Converts key to terminal escape code.
 	-- @param str key to substitute with escape code.
+	-- @return String with escape codes substituted.
 	local function escapeKeys(str)
 		if not supported then return "" end
 
@@ -72,14 +77,16 @@ local colors = (function()
 	end
 
 	--- Replaces %{key} codes.
-	-- @param str String with %{key} entries to apply colors to.
+	-- @param str String with %{key} entries to color in.
+	-- @return String with keys replaced for terminal sequences.
 	local function replaceCodes(str)
 		str = string.gsub(str, "(%%{(.-)})", function(_, str) return escapeKeys(str) end)
 		return str
 	end
 
 	--- Apply terminal colors with automatic reset.
-	-- @param str String with %{key} to color in.
+	-- @param str String with %{key} entries to color in.
+	-- @param  String with keys replaced for terminal sequences.
 	local function ansicolors(str)
 		str = tostring(str or '')
 		return replaceCodes('%{reset}' .. str .. '%{reset}')
@@ -96,12 +103,14 @@ require('lfs')
 
 --- Error printing utility.
 -- Automatically exits with error message when called.
+-- @param str Error message.
 local function pr_err(str)
 	print(colors'%{red}ERROR:%{reset} ' .. str)
 	os.exit()
 end
 
 --- Info printing utility.
+-- @param str Info message.
 local function pr_info(str)
 	print(colors'%{blue}INFO:%{reset} ' .. str)
 end
@@ -492,7 +501,8 @@ local function get_files(index, opt)
 		if string.sub(dir, -1) == "/" then dir = string.sub(dir, 1, -2) end
 
 		local function yieldtree(dir)
-			local ign_search = dir:sub(1,3):find('%./') and dir:sub(3):gsub('/$', '') or dir:gsub('/$', '')
+			local ign_search = dir:sub(1, 3):find('%./') and dir:sub(3):gsub('/$', '') or
+				dir:gsub('/$', '')
 			if not ignore[ign_search] then
 				for entry in lfs.dir(dir) do
 					if entry ~= "." and entry ~= ".." then
@@ -521,7 +531,7 @@ local function get_files(index, opt)
 		local file_list = {}
 		if opt.recurse then
 			for file, _ in dirtree(path, opt.full, ignore) do
-				table.insert(file_list, file:sub(1,3):find('%./') and file:sub(3) or file)
+				table.insert(file_list, file:sub(1, 3):find('%./') and file:sub(3) or file)
 			end
 		else
 			for file in lfs.dir(path) do
