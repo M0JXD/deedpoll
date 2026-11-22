@@ -468,7 +468,6 @@ end
 --- Get's list of files from remaining CLI arguments, or failing that the current directory.
 local function get_files(index, opt)
 	local file_list = {}
-	local rev = {}
 	local function get_dir()
 		for file in lfs.dir(lfs.currentdir()) do
 			if not opt.full then
