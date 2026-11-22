@@ -7,17 +7,6 @@ Deedpoll is made with Lua and should run in any Lua 5.1 or later interpreter, in
 
 ## Usage
 
-In most terminals, Deedpoll's output is colourful:
-
-- Directories are shown in bold blue, akin to `ls`.
-- In the case where a rename does not cause a change, Deedpoll uses a cyan arrow instead of a yellow one.
-- Parameters/option overviews and informational text use colours to make them easier to read.
-
-**insert** and **replace** mode require parameters.
-Parameters are expected as the immediate arguments after specifying the mode, and are not flagged like options.
-
-Options are parsed as full words. E.g. `-i 2` will not be parsed, you must use `-i=2`.
-
 ```
 Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
 
@@ -69,28 +58,33 @@ EXAMPLES
   deedpoll replace "old" "new" -d ignore.txt
 ```
 
+### Color
+
+In most terminals, Deedpoll's output is colourful:
+
+- Directories are shown in bold blue, akin to `ls`.
+- In the case where a rename does not cause a change, Deedpoll uses a cyan arrow instead of a yellow one.
+- Parameters/option overviews and informational text use colours to make them easier to read.
+
+### Arguments
+
 Deedpoll does not heaviliy sanitise it's CLI arguments.
 For example, `deedpoll any` will resolve to the remove accent mode, as the argument begins with *a*.
+
+**insert** and **replace** mode require parameters.
+Parameters are expected as the immediate arguments after specifying the mode, and are not flagged like options.
+
+Options are parsed as full words, e.g. `-i 2` will not be parsed, you must use `-i=2`.
 
 ### Hidden files
 
 Use `--name=full` if you need to work with hidden files/directories, as by default all dots are treated as extension denominators.
 
-## Install
+### Case Sensitivity
 
-Most systems should provide installable packages for [Lua][1] and [LuaFileSystem][2].
-Releases offers the ready to run script with a shebang added that can be used directly, and placed with the user's other binaries.
-All in one binaries for Windows (supporting XP and newer) are made with [luainstaller][3].
+Windows is a case insensitive filesystem, so the case sensitive option has no effect there.
 
-[1]: https://www.lua.org/
-[2]: https://lunarmodules.github.io/luafilesystem/
-[3]: https://github.com/Water-Run/luainstaller
-
-Alternatively, use Deedpoll's custom Lua build system.
-Clone the source and use `./make && ./make install` to install to */usr/local*.
-The second argument can be set with a different install prefix, e.g. `./make install ~/.local`.
-
-## Regular Expression Support
+### Regular Expression Support
 
 At this time, Deedpoll does not support regular expression find and replace.
 Other tools like [f2][1], [brename][2] and [rnr][3] offer this in a much better capacity.
@@ -101,6 +95,23 @@ Deedpoll exists to do simple renaming tasks with less mental effort than it woul
 [3]: https://github.com/ismaelgv/rnr
 
 On the converse, Deedpoll enables the user to use Lua patterns, which are simpler albeit more limited (but still very capable).
+
+## Install
+
+Most systems should provide installable packages for [Lua][1] and [LuaFileSystem][2].
+Releases offers the ready to run script with a shebang added that can be used directly, and placed with the user's other binaries.
+
+[1]: https://www.lua.org/
+[2]: https://lunarmodules.github.io/luafilesystem/
+
+Alternatively, use Deedpoll's custom Lua build system. Clone the source and use `./make && ./make install` to install to */usr/local*.
+The second argument can be set with a different install prefix, e.g. `./make install ~/.local`.
+
+### Windows
+
+I have not yet found a satisfactory way to deliver Deedpoll for Window's systems.
+If you have a Lua installation with LuaFileSystem you will be able to run Deedpoll, but that is not simple for the end user.
+One consideration is to make a kind of "all in one" binaries with one of the plethora of available tools.
 
 ## Development
 
@@ -119,12 +130,13 @@ The *make* system offers the following options:
 - install - Install to system, requires `build` to have run.
 - uninstall - Uninstall from system. The make system does not remember custom prefixes, so you will need to specify again.
 - test - Run the test suite.
-- clean - Delete build and any lingering test files.
+- clean - Delete *build/* and any lingering test files.
 
 ### Tests
 
 New tests are added to *tests.lua* with the `test{}` function.
-They are simply Lua tables detailing the test's parameters and expected outputs.
+They are simply Lua tables detailing aspects of the test.
+
 Tests are of the form:
 
 ```lua
