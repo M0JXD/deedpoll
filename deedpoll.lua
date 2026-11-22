@@ -165,15 +165,15 @@ local function pr_help()
 	print(colors '  deedpoll delete --pos=2 --to=5')
 	print(colors '  %{dim}# Insert "text {n}" at start, incrementing in 2\'s, no confirmation')
 	print(colors '  deedpoll insert "text %n" -i=2 -y')
-	print(colors '  %{dim}# Replace "old" with "new" in current directory except for "ignore.txt"')
-	print(colors '  deedpoll replace "old" "new" -d ignore.txt')
+	print(colors '  %{dim}# Replace "old" with "new" in current directory except for "old_ignore.txt"')
+	print(colors '  deedpoll replace "old" "new" -d old_ignore.txt')
 	os.exit()
 	-- LuaFormatter on
 end
 
 --- Print version information and exit.
 local function pr_version()
-	print('Deedpoll 0.1.0  Copyright (C) 2026 Jamie Drinkell')
+	print('Deedpoll 0.1.1  Copyright (C) 2026 Jamie Drinkell')
 	os.exit()
 end
 
