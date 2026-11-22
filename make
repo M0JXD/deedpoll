@@ -34,7 +34,7 @@ if arg[1] == 't' or arg[1] == 'test' then
 	print(colors'%{bright cyan}===== DEEDPOLL TEST SUITE =====')
 
 	for _, test in ipairs(tests) do
-		if arg[2] == '-V' or arg[2] == '--verbose' then print(test.cmd) end
+		if arg[2] == '-V' or arg[2] == '--verbose' then print('> ' .. test.cmd) end
 		io.write(colors'%{yellow}TEST: ' .. test.name)
 
 		-- Create temp test directory for this run
