@@ -109,7 +109,8 @@ The second argument can be set with a different install prefix, e.g. `./make ins
 
 ### Windows
 
-I have not yet found a satisfactory way to deliver Deedpoll for Window's systems. If you have a Lua installation with LuaFileSystem you will be able to run Deedpoll, but that is not simple for the end user.
+I have not yet found a satisfactory way to deliver Deedpoll for Windows.
+If you have a Lua installation with LuaFileSystem you will be able to run Deedpoll, but that is not simple for an end user.
 
 One consideration is to make a kind of "all in one" binary with one of the plethora of available tools.
 
