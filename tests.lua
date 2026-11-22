@@ -170,7 +170,7 @@ test{
 
 test{
 	name = 'Insert text at end.',
-	cmd = 'deedpoll insert --pos=1e "TEXT"',
+	cmd = 'deedpoll insert "TEXT" --pos=1e',
 	input = {
 		'test.txt'
 	},
