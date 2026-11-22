@@ -18,7 +18,7 @@ Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
   lower   (l)  Changes names to lower case.
   replace (r)  Replace text in filename.
   title   (t)  Changes names to title case.
-  upper   (u)  Changes names to upper case
+  upper   (u)  Changes names to upper case.
 
 [PARAMETERS]
   FIND  Find text for replace mode. Wildcards ? and * are supported.
@@ -35,7 +35,7 @@ Usage: deedpoll [MODE] [PARAMETERS] [OPTIONS] [FILES]
   -n=/--name=     [(b)ase/(e)xt/(f)ull] aspect of filename to change.
   -o/--overwrite  Enable overwrite for insert mode.
   -p=/--pos=      Start position for insert/delete.
-  -r/--recurse    Recurse search for files. Directories are not be renamed.
+  -r/--recurse    Recurse search for files. Directories are not renamed.
   -s=/--start=    Start number for incremented %n patterns.
   -t=/--to=       Position to delete to in delete mode.
   -v/--version    Show version information.
