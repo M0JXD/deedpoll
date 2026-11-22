@@ -1,6 +1,6 @@
-# Deedpoll CLI File Renaming Utility
+# Deedpoll - Bulk File Renaming Utility
 
-Deedpoll is a simple, easy and useful CLI bulk file renaming utility.
+Deedpoll is a simple and useful CLI bulk/batch file renaming utility.
 It exists to bring the simplistic but powerful renaming model of GUI utilities like Linux Mint's Bulky and Thunar Bulk Rename to other systems in a maximally portable way.
 
 Deedpoll is made with Lua and should run in any Lua 5.1 or later interpreter, including LuaJIT. It requires LuaFileSystem.
@@ -109,8 +109,8 @@ The second argument can be set with a different install prefix, e.g. `./make ins
 
 ### Windows
 
-I have not yet found a satisfactory way to deliver Deedpoll for Window's systems.
-If you have a Lua installation with LuaFileSystem you will be able to run Deedpoll, but that is not simple for the end user.
+I have not yet found a satisfactory way to deliver Deedpoll for Window's systems. If you have a Lua installation with LuaFileSystem you will be able to run Deedpoll, but that is not simple for the end user.
+
 One consideration is to make a kind of "all in one" binary with one of the plethora of available tools.
 
 ## Development
@@ -142,16 +142,16 @@ Tests are of the form:
 ```lua
 -- Template for Deedpoll's tests.
 test{
-	name = 'Descriptive name for the test.',
-	cmd = 'deedpoll [MODE] [OPTIONS]',
+    name = 'Descriptive name for the test.',
+    cmd = 'deedpoll [MODE] [OPTIONS]',
     files = {
         'filenames_to_pass_at_cli (optional).txt'
     },
-	input = {
-		'starting_filename.txt'
-	},
-	expected = {
-		'expected_file_name.txt'
-	}
+    input = {
+        'starting_filename.txt'
+    },
+    expected = {
+        'expected_file_name.txt'
+    }
 }
 ```
