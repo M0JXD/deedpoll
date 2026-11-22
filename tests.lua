@@ -384,7 +384,9 @@ test{
 		'top1/level1/level2/file2.txt',
 		'top2/',
 		'top2/file.txt',
-		'top2/file2.txt'
+		'top2/file2.txt',
+		'.hidden/',
+		'.hidden/file.txt'
 	},
 	expected = {
 		'FILE.txt',
@@ -392,7 +394,36 @@ test{
 		'top1/level1/level2/FILE.txt',
 		'top1/level1/level2/FILE2.txt',
 		'top2/FILE.txt',
-		'top2/FILE2.txt'
+		'top2/FILE2.txt',
+		'.hidden/file.txt'
+	}
+}
+
+test{
+	name = 'Recurse mode with --full.',
+	cmd = 'deedpoll upper --recurse --full',
+	input = {
+		'file.txt',
+		'file2.txt',
+		'top1/',
+		'top1/level1/',
+		'top1/level1/level2/',
+		'top1/level1/level2/file.txt',
+		'top1/level1/level2/file2.txt',
+		'top2/',
+		'top2/file.txt',
+		'top2/file2.txt',
+		'.hidden/',
+		'.hidden/file.txt'
+	},
+	expected = {
+		'FILE.txt',
+		'FILE2.txt',
+		'top1/level1/level2/FILE.txt',
+		'top1/level1/level2/FILE2.txt',
+		'top2/FILE.txt',
+		'top2/FILE2.txt',
+		'.hidden/FILE.txt'
 	}
 }
 
@@ -421,6 +452,34 @@ test{
 		'top1/level1/level2/FILE2.txt',
 		'top2/file.txt',
 		'top2/file2.txt'
+	}
+}
+
+test{
+	name = 'Recurse mode with disallowed path.',
+	cmd = 'deedpoll upper --recurse --disallow',
+	files = {
+		'top1/'
+	},
+	input = {
+		'file.txt',
+		'file2.txt',
+		'top1/',
+		'top1/level1/',
+		'top1/level1/level2/',
+		'top1/level1/level2/file.txt',
+		'top1/level1/level2/file2.txt',
+		'top2/',
+		'top2/file.txt',
+		'top2/file2.txt'
+	},
+	expected = {
+		'FILE.txt',
+		'FILE2.txt',
+		'top1/level1/level2/file.txt',
+		'top1/level1/level2/file2.txt',
+		'top2/FILE.txt',
+		'top2/FILE2.txt',
 	}
 }
 
