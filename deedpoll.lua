@@ -479,19 +479,21 @@ end
 -- Source - https://stackoverflow.com/a/49405922
 -- Posted by user6889435, modified by community. See post 'Timeline' for change history
 -- Retrieved 2026-11-22, License - CC BY-SA 3.0
-function dirtree(dir)
+function dirtree(dir, opt)
 	assert(dir and dir ~= "", "Please pass directory parameter")
 	if string.sub(dir, -1) == "/" then dir = string.sub(dir, 1, -2) end
 
 	local function yieldtree(dir)
 		for entry in lfs.dir(dir) do
 			if entry ~= "." and entry ~= ".." then
-				local entry = dir .. "/" .. entry
-				local attr = lfs.attributes(entry)
-				if attr.mode == "directory" then
-					yieldtree(entry)
-				else
-					coroutine.yield(entry, attr)
+				if entry:sub(1, 1) ~= '.' or opt.full then
+					local entry = dir .. "/" .. entry
+					local attr = lfs.attributes(entry)
+					if attr.mode == "directory" then
+						yieldtree(entry)
+					else
+						coroutine.yield(entry, attr)
+					end
 				end
 			end
 		end
@@ -504,7 +506,7 @@ local function get_files(index, opt)
 	local file_list = {}
 	local function get_dir()
 		if opt.recurse then
-			for file, _ in dirtree('.') do table.insert(file_list, file:sub(3)) end
+			for file, _ in dirtree('.', opt) do table.insert(file_list, file:sub(3)) end
 		else
 			for file in lfs.dir(lfs.currentdir()) do
 				if not opt.full then
@@ -544,7 +546,7 @@ local function get_files(index, opt)
 				end
 			else
 				if opt.recurse and lfs.attributes(arg[i], 'mode') == 'directory' then
-					for file, _ in dirtree(arg[i]) do
+					for file, _ in dirtree(arg[i], opt) do
 						table.insert(file_list, file)
 					end
 
