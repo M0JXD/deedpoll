@@ -486,7 +486,7 @@ function dirtree(dir)
 	local function yieldtree(dir)
 		for entry in lfs.dir(dir) do
 			if entry ~= "." and entry ~= ".." then
-				entry = dir .. "/" .. entry
+				local entry = dir .. "/" .. entry
 				local attr = lfs.attributes(entry)
 				if attr.mode == "directory" then
 					yieldtree(entry)
