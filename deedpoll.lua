@@ -561,7 +561,6 @@ local function get_files(index, opt)
 				local ignore = {}
 				for i = index, #arg do
 					check_arg(arg[i])
-					print('Ignoring: ' .. arg[i])
 					ignore[arg[i]:gsub('/$', '')] = true
 				end
 				file_list = get_dir('.', opt, ignore)
