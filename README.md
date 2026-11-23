@@ -117,13 +117,13 @@ The build system makes bundles for Lua 5.2 and Lua 5.4, as the newer version's p
 
 ## Development
 
-Deedpoll includes it's own "build" system and test suite created in Lua, contained across the *make* and *tests.lua* files.
+Deedpoll includes its own "build" system and test suite created in Lua, contained across the *make* and *tests.lua* files.
 
 Deedpoll use a forked version of [ansicolors][1] to provide colours, which is bundled into the main source.
 *ansicolors* is also used for the *make* system, so is also stored separately under *lib/*.
 Deedpoll is written in such a way that updates to *ansicolors* can be easily pasted into the source code.
 
-Most of Deedpoll's code is handwritten, but in cases where it isn't that is clearly commented in the source.
+Most of Deedpoll's code is handwritten, but in cases where it isn't are clearly commented in the source.
 Such snippets include:
 
 - Code directly translated from Linux Mint's Bulky (Python) to Lua.
