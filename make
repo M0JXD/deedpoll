@@ -130,11 +130,12 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 		local lua_ver = bin_zip:match('5..')
 		lua_ver = lua_ver:sub(1, 1) .. lua_ver:sub(3)
 
-		-- Fetch LuaBinaries and extract
-		os.execute(string.format('curl -s -L -J --output-dir %s -O %s', path, url_bin))
+		local zip = isWindows and 'tar -a -c -f' or 'zip -rq'
 		local unzip = (isWindows and 'tar -xf ' or 'unzip -o ') .. bin_zip
 		unzip = unzip .. (isWindows and '' or ' > /dev/null')
 
+		-- Fetch LuaBinaries and extract
+		os.execute(string.format('curl -s -L -J --output-dir %s -O %s', path, url_bin))
 		os.execute(string.format('cd %s && %s && cd ../..', path, unzip))
 		os.remove(path .. '/' .. bin_zip)
 		os.remove(path .. '/luac' .. lua_ver .. '.exe')
@@ -143,10 +144,17 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 		-- Fetch lfs.dll from ZeroBrane Studio
 		os.execute(string.format('curl -s -L -J --output-dir %s -O %s', path, url_dll))
 		os.execute('cp deedpoll.lua ' .. path .. '/deedpoll.lua')
+
 		-- Create deedpoll.bat to launch
 		local file = io.open(path .. '/deedpoll.bat', 'w')
 		file:write('@echo off\n.\\lua' .. lua_ver .. '.exe deedpoll.lua %*')
 		file:close()
+
+		-- Create .zips for distribution
+		lfs.chdir('build/windows')
+		os.execute(string.format('%s win32-lua%d.zip %s', zip, lua_ver, 'lua' .. lua_ver))
+		lfs.chdir('../..')
+
 	end
 
 	build_windows('build/windows/lua52', luabin52_url, lfs52_url)
