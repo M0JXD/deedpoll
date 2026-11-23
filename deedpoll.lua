@@ -119,7 +119,7 @@ end
 
 --- Print help info and exit.
 local function pr_help()
--- LuaFormatter off
+	-- LuaFormatter off
 	local mode = colors('%{green}[MODE]')
 	local parameters = colors('%{yellow}[PARAMETERS]')
 	local options = colors('%{magenta}[OPTIONS]')
