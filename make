@@ -14,11 +14,13 @@ local posix_install = arg[2] and arg[2] or '/usr/local'
 -- Windows build URLs
 local luabin52_url =
 	'https://sourceforge.net/projects/luabinaries/files/5.2.4/Tools%20Executables/lua-5.2.4_Win32_bin.zip/download'
-local lfs52_url = 'https://github.com/pkulchenko/ZeroBraneStudio/raw/56d8589d43c552e573939a696fee9e6256d75105/bin/clibs52/lfs.dll'
+local lfs52_url =
+	'https://github.com/pkulchenko/ZeroBraneStudio/raw/56d8589d43c552e573939a696fee9e6256d75105/bin/clibs52/lfs.dll'
 
 local luabin54_url =
 	'https://sourceforge.net/projects/luabinaries/files/5.4.8/Tools%20Executables/lua-5.4.8_Win32_bin.zip/download'
-local lfs54_url = 'https://github.com/pkulchenko/ZeroBraneStudio/raw/refs/heads/master/bin/clibs54/lfs.dll'
+local lfs54_url =
+	'https://github.com/pkulchenko/ZeroBraneStudio/raw/refs/heads/master/bin/clibs54/lfs.dll'
 
 --- Run a command with a custom success checker.
 -- @param cmd Command to run.
@@ -140,7 +142,7 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 
 		-- Fetch lfs.dll from ZeroBrane Studio
 		os.execute(string.format('curl -s -L -J --output-dir %s -O %s', path, url_dll))
-		os.execute('cp deedpoll.lua '.. path ..'/deedpoll.lua')
+		os.execute('cp deedpoll.lua ' .. path .. '/deedpoll.lua')
 		-- Create deedpoll.bat to launch
 		local file = io.open(path .. '/deedpoll.bat', 'w')
 		file:write('@echo off\n.\\lua' .. lua_ver .. '.exe deedpoll.lua %*')
