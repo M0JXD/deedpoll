@@ -111,7 +111,8 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	-- Windows build
 	-- Fetch LuaBinaries Lua5.4 and extract
 	os.execute('curl -s -L -J --output-dir build/windows -O https://sourceforge.net/projects/luabinaries/files/5.4.8/Tools%20Executables/lua-5.4.8_Win32_bin.zip/download')
-	os.execute('cd build/windows && tar -xf lua-5.4.8_Win32_bin.zip && cd ../..')
+	local unzip = isWindows and 'tar -xf lua-5.4.8_Win32_bin.zip' or 'unzip -o lua-5.4.8_Win32_bin.zip > /dev/null'
+	os.execute('cd build/windows && '..unzip..' && cd ../..')
 	os.remove('build/windows/lua-5.4.8_Win32_bin.zip')
 	os.remove('build/windows/luac54.exe')
 	os.remove('build/windows/wlua54.exe')
@@ -128,7 +129,7 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	-- Add shebang and call it a day
 	local source = io.open('deedpoll.lua')
 	local file = io.open('build/deedpoll', 'w')
-	local src = source:read('a')
+	local src = source:read('*all')
 	source:close()
 	src = '#!/usr/bin/env lua\n' .. src
 	file:write(src)
