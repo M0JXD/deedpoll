@@ -110,10 +110,10 @@ The second argument can be set with a different install prefix, e.g. `./make ins
 ### Windows
 
 If you have a Lua installation with LuaFileSystem you will be able to run Deedpoll, but that is not simple for an end user.
-For development purposes, I've found the easiest way to achieve that is with [MSYS2][6] and it's dedicated packages.
+For development purposes, I've found the easiest way to achieve that is with [MSYS2][6] and its dedicated packages.
 
-For distribution, Deedpoll's build command for Windows grabs Lua from [LuaBinaries][7], and LFS from the [ZeroBrane Studio][8] source.
-It bundles everything into a folder and creates a batch file to start it.
+For distribution, Deedpoll's build command for Windows grabs Lua from [LuaBinaries][7], and precompiled LFS from the [ZeroBrane Studio][8] source.
+It bundles everything into a folder and creates a batch file to start it. It works on Windows XP and later.
 You can then drop this set of files somewhere on your *PATH* and use `deedpoll.bat`.
 
 [6]: https://www.msys2.org/
