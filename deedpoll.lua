@@ -33,7 +33,11 @@ local colors = (function()
 	local function colorSupport()
 		local isWindows = type(package) == 'table' and type(package.config) == 'string' and
 			package.config:sub(1, 1) == '\\'
-		return isWindows and (os.getenv("ANSICON") or os.getenv('WT_SESSION')) or true
+		if isWindows then
+			return os.getenv("ANSICON") or os.getenv('WT_SESSION')
+		else
+			return true
+		end
 	end
 
 	--- Color Mode Keys table.
