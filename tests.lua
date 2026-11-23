@@ -483,6 +483,23 @@ test{
 	}
 }
 
+test{
+	name = 'Don\'t rename on name clash.',
+	cmd = 'deedpoll replace "*" ""',
+	input = {
+		'will clash.txt',
+		'would also clash.txt',
+		'new file to clash',
+		'would clash with previous file'
+	},
+	expected = {
+		'will clash.txt',
+		'would also clash.txt',
+		'new file to clash',
+		'would clash with previous file'
+	}
+}
+
 -- LuaFormatter on
 
 return M
