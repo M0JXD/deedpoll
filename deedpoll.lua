@@ -298,11 +298,15 @@ end
 local renamers = {
 	-- Title Case Renamer
 	t = function(name, params, opt)
-		-- Source - https://stackoverflow.com/a/22548737
-		-- Posted by Joe
-		-- Retrieved 2026-11-17, License - CC BY-SA 3.0
-		function titleCase(first, rest) return first:upper() .. rest:lower() end
-		return string.gsub(name, "(%a)([%w_']*)", titleCase)
+		local function tchelper(first, rest)
+			return first:upper()..rest:lower()
+		end
+		-- Add extra characters to the pattern if you need to. _ and ' are
+		--  found in the middle of identifiers and English words.
+		-- We must also put %w_' into [%w_'] to make it handle normal stuff
+		-- and extra stuff the same.
+		-- This also turns hex numbers into, eg. 0Xa7d4
+		return name:gsub("(%a)([%w_']*)", tchelper)
 	end,
 	-- Lower Case Renamer
 	-- TODO: Handle accented characters
