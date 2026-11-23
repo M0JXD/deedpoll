@@ -122,11 +122,10 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	io.flush()
 	lfs.mkdir('build')
 	lfs.mkdir('build/windows')
-	lfs.mkdir('build/windows/lua52')
-	lfs.mkdir('build/windows/lua54')
 
 	-- Windows build
 	local function build_windows(path, url_bin, url_dll)
+		lfs.mkdir(path)
 		local bin_zip = url_bin:match('lua%-5.*_Win32_bin%.zip')
 		local lua_ver = bin_zip:match('5..')
 		lua_ver = lua_ver:sub(1, 1) .. lua_ver:sub(3)
