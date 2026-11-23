@@ -298,6 +298,8 @@ end
 local renamers = {
 	-- Title Case Renamer
 	t = function(name, params, opt)
+		-- Credit: http://lua-users.org/wiki/StringRecipes
+		-- Assumed public domain: http://lua-users.org/lists/lua-l/2011-09/msg00047.html
 		local function tchelper(first, rest)
 			return first:upper()..rest:lower()
 		end
