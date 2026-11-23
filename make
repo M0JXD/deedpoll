@@ -97,23 +97,45 @@ elseif arg[1] == 'u' or arg[1] == 'uninstall' then
 
 elseif arg[1] == 'c' or arg[1] == 'clean' then
 	io.write('CLEANING... ')
-	local clean = isWindows and 'rmdir /S /Q build & rmdir /S /Q test' or
+	local clean = isWindows and 'rmdir /S /Q build 2>nul & rmdir /S /Q test 2>nul' or
 		'rm -r build test > /dev/null 2>&1'
 	run_command(clean, function()
 		if lfs.attributes('build') or lfs.attributes('test') then return false end
 		return true
 	end)
 elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
-	if isWindows then
-		print(colors('Building for Windows is not yet supported. [%{red}FAIL%{reset}%{reset}]'))
-	else
-		lfs.mkdir('build')
-		io.write('BUILDING... ')
-		local cmd = string.format('%s && %s && %s', 'cp deedpoll.lua build/deedpoll',
-			'echo \'#!/usr/bin/env lua\' | cat - build/deedpoll > temp && mv temp build/deedpoll',
-			'chmod +x build/deedpoll')
-		run_command(cmd, function() return lfs.attributes('build/deedpoll') end)
-	end
+	io.write('BUILDING... ')
+	lfs.mkdir('build')
+	lfs.mkdir('build/windows')
+
+	-- Windows build
+	-- Fetch LuaBinaries Lua5.4 and extract
+	os.execute('curl -s -L -J --output-dir build/windows -O https://sourceforge.net/projects/luabinaries/files/5.4.8/Tools%20Executables/lua-5.4.8_Win32_bin.zip/download')
+	os.execute('cd build/windows && tar -xf lua-5.4.8_Win32_bin.zip && cd ../..')
+	os.remove('build/windows/lua-5.4.8_Win32_bin.zip')
+	os.remove('build/windows/luac54.exe')
+	os.remove('build/windows/wlua54.exe')
+
+	-- Fetch lfs.dll for Lua5.4 from ZeroBrane Studio
+	os.execute('curl -s -L -J --output-dir build/windows -O https://github.com/pkulchenko/ZeroBraneStudio/raw/refs/heads/master/bin/clibs54/lfs.dll')
+	os.execute('cp deedpoll.lua build/windows/deedpoll.lua')
+	-- Create deedpoll.bat to launch
+	local file = io.open('build/windows/deedpoll.bat', 'w')
+	file:write('@echo off\n.\\lua54.exe deedpoll.lua %*')
+	file:close()
+
+	-- *nix build
+	-- Add shebang and call it a day
+	local source = io.open('deedpoll.lua')
+	local file = io.open('build/deedpoll', 'w')
+	local src = source:read('a')
+	source:close()
+	src = '#!/usr/bin/env lua\n' .. src
+	file:write(src)
+	file:close()
+
+	local cmd = 'chmod +x build/deedpoll'
+	run_command(cmd, function() return lfs.attributes('build/deedpoll') and lfs.attributes('build/windows/lfs.dll') end)
 
 else
 	print('NO OPTION FOR "' .. arg[1] .. '"')
