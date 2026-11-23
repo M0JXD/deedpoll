@@ -9,7 +9,15 @@ local colors = require('lib.ansicolors')
 local isWindows = type(package) == 'table' and type(package.config) == 'string' and
 	package.config:sub(1, 1) == '\\'
 
-local install = arg[2] and arg[2] or '/usr/local'
+local posix_install = arg[2] and arg[2] or '/usr/local'
+
+local luabin_url =
+	'https://sourceforge.net/projects/luabinaries/files/5.2.4/Tools%20Executables/lua-5.2.4_Win32_bin.zip/download'
+
+local luabin_zip = luabin_url:match('lua%-5.*_Win32_bin%.zip')
+local lua_ver = luabin_zip:match('5..')
+lua_ver = lua_ver:sub(1, 1) .. lua_ver:sub(3)
+local lfs_url = 'https://github.com/pkulchenko/ZeroBraneStudio/raw/56d8589d43c552e573939a696fee9e6256d75105/bin/clibs'..lua_ver..'/lfs.dll'
 
 --- Run a command with a custom success checker.
 -- @param cmd Command to run.
@@ -58,6 +66,8 @@ if arg[1] == 't' or arg[1] == 'test' then
 			end
 		end
 		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
+		-- We can nab Lua from our build on Windows
+		-- os.execute('..\\build\\windows\\lua52.exe ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 
 		-- Check expected file/dir (s) exist
 		local pass = colors(' [%{green}PASS%{reset}]\n')
@@ -75,23 +85,23 @@ elseif arg[1] == 'i' or arg[1] == 'install' then
 	if isWindows then
 		print(colors('Installing on Windows is not yet supported. [%{red}FAIL%{reset}%{reset}]'))
 	else
-		io.write('INSTALLING TO "' .. install .. '"...')
+		io.write('INSTALLING TO "' .. posix_install .. '"...')
 		local cmd = string.format(
 			'cp build/deedpoll %s/bin 2>/dev/null || sudo cp build/deedpoll %s/bin 2>/dev/null',
-			install, install)
-		run_command(cmd, function() return lfs.attributes(install .. '/bin/deedpoll') end)
+			posix_install, posix_install)
+		run_command(cmd, function() return lfs.attributes(posix_install .. '/bin/deedpoll') end)
 	end
 
 elseif arg[1] == 'u' or arg[1] == 'uninstall' then
 	if isWindows then
 		print(colors('Installing on Windows is not yet supported. [%{red}FAIL%{reset}%{reset}]'))
 	else
-		io.write('UNINSTALLING FROM "' .. install .. '"... ')
+		io.write('UNINSTALLING FROM "' .. posix_install .. '"... ')
 		local cmd = string.format(
-			'rm -f %s/bin/deedpoll 2>/dev/null || sudo rm -f %s/bin/deedpoll 2>/dev/null', install,
-			install)
+			'rm -f %s/bin/deedpoll 2>/dev/null || sudo rm -f %s/bin/deedpoll 2>/dev/null',
+			posix_install, posix_install)
 		run_command(cmd, function()
-			return lfs.attributes(install .. '/bin/deedpoll') and false or true
+			return lfs.attributes(posix_install .. '/bin/deedpoll') and false or true
 		end)
 	end
 
@@ -105,24 +115,27 @@ elseif arg[1] == 'c' or arg[1] == 'clean' then
 	end)
 elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	io.write('BUILDING... ')
+	io.flush()
 	lfs.mkdir('build')
 	lfs.mkdir('build/windows')
 
 	-- Windows build
-	-- Fetch LuaBinaries Lua5.4 and extract
-	os.execute('curl -s -L -J --output-dir build/windows -O https://sourceforge.net/projects/luabinaries/files/5.4.8/Tools%20Executables/lua-5.4.8_Win32_bin.zip/download')
-	local unzip = isWindows and 'tar -xf lua-5.4.8_Win32_bin.zip' or 'unzip -o lua-5.4.8_Win32_bin.zip > /dev/null'
-	os.execute('cd build/windows && '..unzip..' && cd ../..')
-	os.remove('build/windows/lua-5.4.8_Win32_bin.zip')
-	os.remove('build/windows/luac54.exe')
-	os.remove('build/windows/wlua54.exe')
+	-- Fetch LuaBinaries and extract
+	os.execute('curl -s -L -J --output-dir build/windows -O ' .. luabin_url)
+	local unzip = (isWindows and 'tar -xf ' or 'unzip -o ') .. luabin_zip
+	local unzip = unzip .. (isWindows and '' or ' > /dev/null')
 
-	-- Fetch lfs.dll for Lua5.4 from ZeroBrane Studio
-	os.execute('curl -s -L -J --output-dir build/windows -O https://github.com/pkulchenko/ZeroBraneStudio/raw/refs/heads/master/bin/clibs54/lfs.dll')
+	os.execute('cd build/windows && ' .. unzip .. ' && cd ../..')
+	os.remove('build/windows/' .. luabin_zip)
+	os.remove('build/windows/luac' .. lua_ver .. '.exe')
+	os.remove('build/windows/wlua' .. lua_ver .. '.exe')
+
+	-- Fetch lfs.dll from ZeroBrane Studio
+	os.execute('curl -s -L -J --output-dir build/windows -O ' .. lfs_url)
 	os.execute('cp deedpoll.lua build/windows/deedpoll.lua')
 	-- Create deedpoll.bat to launch
 	local file = io.open('build/windows/deedpoll.bat', 'w')
-	file:write('@echo off\n.\\lua54.exe deedpoll.lua %*')
+	file:write('@echo off\n.\\lua' .. lua_ver .. '.exe deedpoll.lua %*')
 	file:close()
 
 	-- *nix build
@@ -136,7 +149,9 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	file:close()
 
 	local cmd = 'chmod +x build/deedpoll'
-	run_command(cmd, function() return lfs.attributes('build/deedpoll') and lfs.attributes('build/windows/lfs.dll') end)
+	run_command(cmd, function()
+		return lfs.attributes('build/deedpoll') and lfs.attributes('build/windows/lfs.dll')
+	end)
 
 else
 	print('NO OPTION FOR "' .. arg[1] .. '"')
