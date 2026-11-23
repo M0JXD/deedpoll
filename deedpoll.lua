@@ -300,9 +300,7 @@ local renamers = {
 	t = function(name, params, opt)
 		-- Credit: http://lua-users.org/wiki/StringRecipes
 		-- Assumed public domain: http://lua-users.org/lists/lua-l/2011-09/msg00047.html
-		local function tchelper(first, rest)
-			return first:upper()..rest:lower()
-		end
+		local function tchelper(first, rest) return first:upper() .. rest:lower() end
 		-- Add extra characters to the pattern if you need to. _ and ' are
 		--  found in the middle of identifiers and English words.
 		-- We must also put %w_' into [%w_'] to make it handle normal stuff
@@ -430,25 +428,15 @@ end
 -- @param files List of files to rename.
 local function rename(mode, params, opt, files)
 	local action = renamers[mode]
-	-- Source - https://stackoverflow.com/a/11402486
-	-- Posted by Bart Kiers, modified by community. See post 'Timeline' for change history
-	-- Retrieved 2026-11-19, License - CC BY-SA 3.0
-
+	-- Source: https://www.lua.org/pil/20.4.html - short snippets presumed reusable.
 	--- Makes a given pattern case insensitive.
 	-- @param pattern Pattern to change.
 	-- @return Case insensitive version of the pattern.
-	local function case_insensitive_pattern(pattern)
-		-- find an optional '%' (group 1) followed by any character (group 2)
-		local p = pattern:gsub("(%%?)(.)", function(percent, letter)
-			if percent ~= "" or not letter:match("%a") then
-				-- if the '%' matched, or `letter` is not a letter, return "as is"
-				return percent .. letter
-			else
-				-- else, return a case-insensitive character class of the matched letter
-				return string.format("[%s%s]", letter:lower(), letter:upper())
-			end
+	function nocase(s)
+		s = string.gsub(s, "%a", function(c)
+			return string.format("[%s%s]", string.lower(c), string.upper(c))
 		end)
-		return p
+		return s
 	end
 
 	--- Search a table for duplicate names that would clash.
@@ -474,7 +462,7 @@ local function rename(mode, params, opt, files)
 		end
 
 		-- Make patterns case insenstive if need be.
-		if not opt.sensitive then params.find = case_insensitive_pattern(params.find) end
+		if not opt.sensitive and not opt.pattern then params.find = nocase(params.find) end
 	end
 
 	-- Set up enumerator.
