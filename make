@@ -66,9 +66,9 @@ if arg[1] == 't' or arg[1] == 'test' then
 				test.cmd = string.format('%s "%s"', test.cmd, file)
 			end
 		end
-		-- os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
+		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 		-- We can nab Lua from our build on Windows
-		os.execute('..\\build\\windows\\lua52\\lua52.exe ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
+		-- os.execute('..\\build\\windows\\lua52\\lua52.exe ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 
 		-- Check expected file/dir (s) exist
 		local pass = colors(' [%{green}PASS%{reset}]\n')
