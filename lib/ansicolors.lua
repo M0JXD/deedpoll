@@ -1,4 +1,4 @@
--- ansicolors.lua v1.0.6 (2026-11)
+-- ansicolors.lua v1.0.7 (2026-11)
 
 -- Copyright (c) 2009 Rob Hoelz <rob@hoelzro.net>
 -- Copyright (c) 2011 Enrique García Cota <enrique.garcia.cota@gmail.com>

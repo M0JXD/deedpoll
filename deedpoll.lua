@@ -4,7 +4,7 @@
 -- @section ansicolor
 
 local colors = (function()
-	-- ansicolors.lua v1.0.6 (2026-11)
+	-- ansicolors.lua v1.0.7 (2026-11)
 
 	-- Copyright (c) 2009 Rob Hoelz <rob@hoelzro.net>
 	-- Copyright (c) 2011 Enrique García Cota <enrique.garcia.cota@gmail.com>
@@ -57,9 +57,7 @@ local colors = (function()
 	--- Inserts the escape character to the terminal number.
 	-- @param terminal number to insert.
 	-- @return Escape string with number added.
-	local function escapeNumber(number)
-		return escapeString:format(number)
-	end
+	local function escapeNumber(number) return escapeString:format(number) end
 
 	local supported = colorSupport()
 
