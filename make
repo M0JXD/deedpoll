@@ -11,13 +11,14 @@ local isWindows = type(package) == 'table' and type(package.config) == 'string' 
 
 local posix_install = arg[2] and arg[2] or '/usr/local'
 
-local luabin_url =
+-- Windows build URLs
+local luabin52_url =
 	'https://sourceforge.net/projects/luabinaries/files/5.2.4/Tools%20Executables/lua-5.2.4_Win32_bin.zip/download'
+local lfs52_url = 'https://github.com/pkulchenko/ZeroBraneStudio/raw/56d8589d43c552e573939a696fee9e6256d75105/bin/clibs52/lfs.dll'
 
-local luabin_zip = luabin_url:match('lua%-5.*_Win32_bin%.zip')
-local lua_ver = luabin_zip:match('5..')
-lua_ver = lua_ver:sub(1, 1) .. lua_ver:sub(3)
-local lfs_url = 'https://github.com/pkulchenko/ZeroBraneStudio/raw/56d8589d43c552e573939a696fee9e6256d75105/bin/clibs'..lua_ver..'/lfs.dll'
+local luabin54_url =
+	'https://sourceforge.net/projects/luabinaries/files/5.4.8/Tools%20Executables/lua-5.4.8_Win32_bin.zip/download'
+local lfs54_url = 'https://github.com/pkulchenko/ZeroBraneStudio/raw/refs/heads/master/bin/clibs54/lfs.dll'
 
 --- Run a command with a custom success checker.
 -- @param cmd Command to run.
@@ -65,9 +66,9 @@ if arg[1] == 't' or arg[1] == 'test' then
 				test.cmd = string.format('%s "%s"', test.cmd, file)
 			end
 		end
-		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
+		-- os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 		-- We can nab Lua from our build on Windows
-		-- os.execute('..\\build\\windows\\lua52.exe ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
+		os.execute('..\\build\\windows\\lua52\\lua52.exe ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 
 		-- Check expected file/dir (s) exist
 		local pass = colors(' [%{green}PASS%{reset}]\n')
@@ -118,25 +119,36 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	io.flush()
 	lfs.mkdir('build')
 	lfs.mkdir('build/windows')
+	lfs.mkdir('build/windows/lua52')
+	lfs.mkdir('build/windows/lua54')
 
 	-- Windows build
-	-- Fetch LuaBinaries and extract
-	os.execute('curl -s -L -J --output-dir build/windows -O ' .. luabin_url)
-	local unzip = (isWindows and 'tar -xf ' or 'unzip -o ') .. luabin_zip
-	local unzip = unzip .. (isWindows and '' or ' > /dev/null')
+	local function build_windows(path, url_bin, url_dll)
+		local bin_zip = url_bin:match('lua%-5.*_Win32_bin%.zip')
+		local lua_ver = bin_zip:match('5..')
+		lua_ver = lua_ver:sub(1, 1) .. lua_ver:sub(3)
 
-	os.execute('cd build/windows && ' .. unzip .. ' && cd ../..')
-	os.remove('build/windows/' .. luabin_zip)
-	os.remove('build/windows/luac' .. lua_ver .. '.exe')
-	os.remove('build/windows/wlua' .. lua_ver .. '.exe')
+		-- Fetch LuaBinaries and extract
+		os.execute(string.format('curl -s -L -J --output-dir %s -O %s', path, url_bin))
+		local unzip = (isWindows and 'tar -xf ' or 'unzip -o ') .. bin_zip
+		local unzip = unzip .. (isWindows and '' or ' > /dev/null')
 
-	-- Fetch lfs.dll from ZeroBrane Studio
-	os.execute('curl -s -L -J --output-dir build/windows -O ' .. lfs_url)
-	os.execute('cp deedpoll.lua build/windows/deedpoll.lua')
-	-- Create deedpoll.bat to launch
-	local file = io.open('build/windows/deedpoll.bat', 'w')
-	file:write('@echo off\n.\\lua' .. lua_ver .. '.exe deedpoll.lua %*')
-	file:close()
+		os.execute(string.format('cd %s && %s && cd ../..', path, unzip))
+		os.remove(path .. '/' .. bin_zip)
+		os.remove(path .. '/luac' .. lua_ver .. '.exe')
+		os.remove(path .. '/wlua' .. lua_ver .. '.exe')
+
+		-- Fetch lfs.dll from ZeroBrane Studio
+		os.execute(string.format('curl -s -L -J --output-dir %s -O %s', path, url_dll))
+		os.execute('cp deedpoll.lua '.. path ..'/deedpoll.lua')
+		-- Create deedpoll.bat to launch
+		local file = io.open(path .. '/deedpoll.bat', 'w')
+		file:write('@echo off\n.\\lua' .. lua_ver .. '.exe deedpoll.lua %*')
+		file:close()
+	end
+
+	build_windows('build/windows/lua52', luabin52_url, lfs52_url)
+	build_windows('build/windows/lua54', luabin54_url, lfs54_url)
 
 	-- *nix build
 	-- Add shebang and call it a day
@@ -150,7 +162,7 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 
 	local cmd = 'chmod +x build/deedpoll'
 	run_command(cmd, function()
-		return lfs.attributes('build/deedpoll') and lfs.attributes('build/windows/lfs.dll')
+		return lfs.attributes('build/deedpoll') and lfs.attributes('build/windows/lua54/lfs.dll')
 	end)
 
 else
