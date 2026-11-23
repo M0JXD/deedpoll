@@ -101,7 +101,7 @@ end)()
 --- Deedpoll
 -- @section deedpoll
 
-require('lfs')
+local lfs = require('lfs')
 
 --- Error printing utility.
 -- Automatically exits with error message when called.
@@ -119,12 +119,13 @@ end
 
 --- Print help info and exit.
 local function pr_help()
-	-- LuaFormatter off
+-- LuaFormatter off
 	local mode = colors('%{green}[MODE]')
 	local parameters = colors('%{yellow}[PARAMETERS]')
 	local options = colors('%{magenta}[OPTIONS]')
 	local files = colors('%{blue}[FILES]')
-	local usage = string.format(colors('%{bright}Usage:%{reset}') .. ' deedpoll %s %s %s %s', mode, parameters, options, files)
+	local usage = string.format(colors('%{bright}Usage:%{reset}') .. ' deedpoll %s %s %s %s',
+			mode, parameters, options, files)
 	print(usage)
 	print('\n' .. mode)
 	print(colors '  %{cyan}accent  (a)%{reset}  Removes accents in the file name.')
@@ -425,7 +426,7 @@ local function rename(mode, params, opt, files)
 	--- Makes a given pattern case insensitive.
 	-- @param pattern Pattern to change.
 	-- @return Case insensitive version of the pattern.
-	function nocase(s)
+	local function nocase(s)
 		s = string.gsub(s, "%a", function(c)
 			return string.format("[%s%s]", string.lower(c), string.upper(c))
 		end)
@@ -520,7 +521,7 @@ local function get_files(index, opt)
 	-- @param hidden whether to recurse hidden directories.
 	-- @param ignore Dictionary of paths not to recurse.
 	-- @return iterator
-	function dirtree(dir, hidden, ignore)
+	local function dirtree(dir, hidden, ignore)
 		assert(dir and dir ~= "", "Please pass directory parameter")
 		if string.sub(dir, -1) == "/" then dir = string.sub(dir, 1, -2) end
 
@@ -765,7 +766,7 @@ end
 
 -- Check if any arg is a version or help request.
 if not arg[1] then pr_help() end
-for k, v in ipairs(arg) do
+for _, v in ipairs(arg) do
 	if v:find('-h', 1, true) then pr_help() end
 	if v:find('-v', 1, true) then pr_version() end
 end

@@ -2,7 +2,7 @@
 -- Copyright 2026 Jamie Drinkell
 --- Make & Test system for Deedpoll
 
-require('lfs')
+local lfs = require('lfs')
 local tests = require('tests')
 local colors = require('lib.ansicolors')
 
@@ -70,7 +70,8 @@ if arg[1] == 't' or arg[1] == 'test' then
 		end
 		os.execute('lua ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 		-- We can nab Lua from our build on Windows
-		-- os.execute('..\\build\\windows\\lua52\\lua52.exe ../' .. test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
+		-- os.execute('..\\build\\windows\\lua52\\lua52.exe ../' ..
+		-- 	test.cmd:gsub('deedpoll', 'deedpoll.lua') .. null_redirect)
 
 		-- Check expected file/dir (s) exist
 		local pass = colors(' [%{green}PASS%{reset}]\n')
@@ -133,7 +134,7 @@ elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 		-- Fetch LuaBinaries and extract
 		os.execute(string.format('curl -s -L -J --output-dir %s -O %s', path, url_bin))
 		local unzip = (isWindows and 'tar -xf ' or 'unzip -o ') .. bin_zip
-		local unzip = unzip .. (isWindows and '' or ' > /dev/null')
+		unzip = unzip .. (isWindows and '' or ' > /dev/null')
 
 		os.execute(string.format('cd %s && %s && cd ../..', path, unzip))
 		os.remove(path .. '/' .. bin_zip)
