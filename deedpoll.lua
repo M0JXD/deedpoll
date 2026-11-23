@@ -316,42 +316,35 @@ local renamers = {
 	u = function(name, params, opt) return name:upper() end,
 	-- Accent Remove Renamer
 	a = function(name, params, opt)
-		-- Source - https://stackoverflow.com/a/56275419
-		-- Posted by Gamora
-		-- Retrieved 2026-11-17, License - CC BY-SA 4.0
-		-- LuaFormatter off
-		local accent_map = {
-			["À"] = "A", ["Á"] = "A", ["Â"] = "A", ["Ã"] = "A", ["Ä"] = "A", ["Å"] = "A",["Æ"] = "AE",
-			["ß"] = "s",
-			["Ç"] = "C",
-			["Ð"] = "D",
-			["È"] = "E", ["É"] = "E", ["Ê"] = "E", ["Ë"] = "E",
-			["Ì"] = "I", ["Í"] = "I", ["Î"] = "I", ["Ï"] = "I",
-			["Ñ"] = "N",
-			["Ò"] = "O", ["Ó"] = "O", ["Ô"] = "O", ["Õ"] = "O", ["Ö"] = "O", ["Ø"] = "O",
-			["Þ"] = "P",
-			["Ù"] = "U", ["Ú"] = "U", ["Û"] = "U", ["Ü"] = "U",
-			["Ý"] = "Y",
-			["à"] = "a", ["á"] = "a", ["â"] = "a", ["ã"] = "a", ["ä"] = "a", ["å"] = "a", ["æ"] = "ae",
-			["ç"] = "c",
-			["è"] = "e", ["é"] = "e", ["ê"] = "e", ["ë"] = "e",
-			["ì"] = "i", ["í"] = "i", ["î"] = "i", ["ï"] = "i",
-			["ñ"] = "n",
-			["ò"] = "o", ["ó"] = "o", ["ô"] = "o", ["õ"] = "o", ["ö"] = "o", ["ø"] = "o", ["ð"] = "eth",
-			["ù"] = "u", ["ú"] = "u", ["û"] = "u", ["ü"] = "u",
-			["ý"] = "y", ["ÿ"] = "y",
-			["þ"] = "p"
+		-- Source: Google's Search AI, which told me I may use this snippet in my MIT app.
+		-- I have a screenshot!
+		local accents = {
+			["à"] = "a", ["á"] = "a", ["â"] = "a", ["ã"] = "a", ["ä"] = "a", ["å"] = "a",
+			["ç"] = "c", ["è"] = "e", ["é"] = "e", ["ê"] = "e", ["ë"] = "e", ["ì"] = "i",
+			["í"] = "i", ["î"] = "i", ["ï"] = "i", ["ñ"] = "n", ["ò"] = "o", ["ó"] = "o",
+			["ô"] = "o", ["õ"] = "o", ["ö"] = "o", ["ù"] = "u", ["ú"] = "u", ["û"] = "u",
+			["ü"] = "u", ["ý"] = "y", ["ÿ"] = "y", ["À"] = "A", ["Á"] = "A", ["Â"] = "A",
+			["Ã"] = "A", ["Ä"] = "A", ["Å"] = "A", ["Ç"] = "C", ["È"] = "E", ["É"] = "E",
+			["Ê"] = "E", ["Ë"] = "E", ["Ì"] = "I", ["Í"] = "I", ["Î"] = "I", ["Ï"] = "I",
+			["Ñ"] = "N", ["Ò"] = "O", ["Ó"] = "O", ["Ô"] = "O", ["Õ"] = "O", ["Ö"] = "O",
+			["Ù"] = "U", ["Ú"] = "U", ["Û"] = "U", ["Ü"] = "U", ["Ý"] = "Y"
 		}
-		-- LuaFormatter on
-		local normalised_string = ''
-		normalised_string = name:gsub("[%z\1-\127\194-\244][\128-\191]*", accent_map)
-		return normalised_string
+
+		local function remove_diacritics(str)
+			-- Matches one full UTF-8 character at a time
+			return (str:gsub("[%z\1-\127\194-\244][\128-\191]*",
+				function(char) return accents[char] or char end))
+		end
+
+		return remove_diacritics(name)
+
 	end,
 	-- First Character Uppercase Renamer
 	-- TODO: Handle accented characters
 	f = function(name, params, opt) return name:sub(1, 1):upper() .. name:sub(2):lower() end,
 	-- Delete Renamer
 	d = function(name, params, opt)
+		-- Near direct translation of Bulky's remove() method.
 		-- TODO: UTF-8 lengths instead of byte lengths
 		local length = name:len()
 		local from_index = opt.pos - 1
