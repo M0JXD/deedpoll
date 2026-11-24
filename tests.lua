@@ -500,6 +500,26 @@ test{
 	}
 }
 
+
+test{
+	name = 'Rename 10000 files.',
+	cmd = 'deedpoll replace "file" "new"',
+	input = (function()
+		local files = {}
+		for i=1, 10001 do
+			files[i] = 'file' .. i .. '.txt'
+		end
+		return files
+	end)(),
+	expected = (function()
+		local files = {}
+		for i=1, 10001 do
+			files[i] = 'new' .. i .. '.txt'
+		end
+		return files
+	end)()
+}
+
 -- LuaFormatter on
 
 return M

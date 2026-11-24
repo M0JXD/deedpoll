@@ -45,8 +45,10 @@ if arg[1] == 't' or arg[1] == 'test' then
 	print(colors'%{bright cyan}===== DEEDPOLL TEST SUITE =====')
 
 	for _, test in ipairs(tests) do
-		if arg[2] == '-V' or arg[2] == '--verbose' then print('> ' .. test.cmd) end
+		local verbose = (arg[2] == '-V' or arg[2] == '--verbose')
+		if verbose then print('> ' .. test.cmd) end
 		io.write(colors'%{yellow}TEST: ' .. test.name)
+		if not verbose then io.flush() end
 
 		-- Create temp test directory for this run
 		lfs.mkdir('test')
@@ -81,7 +83,7 @@ if arg[1] == 't' or arg[1] == 'test' then
 		io.write(pass)
 		lfs.chdir('..')
 		os.execute(delete_dir .. 'test')
-		if arg[2] == '-V' or arg[2] == '--verbose' then print('\n') end
+		if verbose then print('\n') end
 	end
 	-- TODD: Planned search mode would be inherently different as it searches within files
 
