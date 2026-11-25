@@ -164,3 +164,31 @@ test{
     }
 }
 ```
+
+### TODO/IDEAS
+
+- Remove/replace last CC BY-SA snippet. I don't like the whole recurse mode code anyway, could be much cleaner.
+- Also remove/replace any other "ambiguously" licensed snippets.
+- Extract renamers as a separate library that extends the string library. Maybe add  other functions too, like Solar2D's "python style" string library.
+- Date/Time renamers.
+- Support custom renamers, where user writes a custom "renamer.lua" of the form:
+    ```lua
+    return function(str)
+        -- their rename logic
+        -- str:delete(1, true, 3) -- Can use existing renamers
+        return str
+    end
+    ```
+- Find out why delete mode tests fail only on Windows XP (7 and later are fine).
+- Make printed rename aligned like so:
+    ```
+    file          -> new
+    file long.txt -> new long.txt
+    ```
+- Where leading paths would cause the rename printout to be longer than 80 lines, ignore the leading ones as necessary.
+- Make upper/lower etc. modes support diacritics.
+- UTF-8 awareness. Should we make Lua5.3 the minimum?
+- Make argument parsing more standardised and sanitised.
+- Might move from LuaFormatter to Stylua, and try to fix all Selene/Luacheck warnings.
+    - Integrate these checks into *make*
+- Icon, badges for README, all that fancy whatnot.
