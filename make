@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 -- Copyright 2026 Jamie Drinkell
---- Make & Test system for Deedpoll
+--- Make & Test system for Deedpoll.
 
 local lfs = require('lfs')
 local tests = require('tests')
@@ -34,7 +34,7 @@ local function run_command(cmd, check)
 	end
 end
 
---- Main Script Starts
+--- Main script starts.
 -- @section main
 
 if arg[1] == 't' or arg[1] == 'test' then
@@ -119,6 +119,15 @@ elseif arg[1] == 'c' or arg[1] == 'clean' then
 		if lfs.attributes('build') or lfs.attributes('test') then return false end
 		return true
 	end)
+
+elseif arg[1] == 'f' or arg[1] == 'fetch' then
+	io.write('FETCHING... ')
+	-- Fetch an updated ansicolors
+	local cmd = 'curl -L -s --output-dir lib -O https://raw.githubusercontent.com/M0JXD/ansicolors.lua/refs/heads/master/ansicolors.lua'
+	run_command(cmd, function()
+		return lfs.attributes('lib/ansicolors.lua')
+	end)
+
 elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	io.write('BUILDING... ')
 	io.flush()
