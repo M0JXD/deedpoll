@@ -123,10 +123,9 @@ elseif arg[1] == 'c' or arg[1] == 'clean' then
 elseif arg[1] == 'f' or arg[1] == 'fetch' then
 	io.write('FETCHING... ')
 	-- Fetch an updated ansicolors
-	local cmd = 'curl -L -s --output-dir lib -O https://raw.githubusercontent.com/M0JXD/ansicolors.lua/refs/heads/master/ansicolors.lua'
-	run_command(cmd, function()
-		return lfs.attributes('lib/ansicolors.lua')
-	end)
+	local cmd =
+		'curl -L -s --output-dir lib -O https://raw.githubusercontent.com/M0JXD/ansicolors-ng/refs/heads/master/ansicolors.lua'
+	run_command(cmd, function() return lfs.attributes('lib/ansicolors.lua') end)
 
 elseif arg[1] == 'b' or arg[1] == 'build' or not arg[1] then
 	io.write('BUILDING... ')
